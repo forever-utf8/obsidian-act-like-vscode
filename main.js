@@ -112,6 +112,14 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
         this.scheduleFileExplorerSync();
       })
     );
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", (leaf) => {
+        if (!leaf || leaf === this.previewLeaf) return;
+        if (leaf.view.getViewType() === "empty") {
+          this.setAsPreview(leaf);
+        }
+      })
+    );
     this.app.workspace.onLayoutReady(() => this.initializeFileExplorerStyling());
     this.syncTabHandlers();
   }
@@ -284,8 +292,10 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
       return;
     }
     if (this.previewLeaf && previewAlive) {
-      await this.previewLeaf.openFile(file);
-      this.applyPreviewStyle(this.previewLeaf, true);
+      const leaf = this.previewLeaf;
+      await leaf.openFile(file);
+      this.applyPreviewStyle(leaf, true);
+      this.app.workspace.setActiveLeaf(leaf, { focus: true });
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);

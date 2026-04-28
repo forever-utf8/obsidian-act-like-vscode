@@ -194,6 +194,18 @@ export default class OpenLikeVSC extends Plugin {
       })
     );
 
+    // When the active leaf switches to a blank "New tab", treat it as a preview
+    // slot so the next single-click opens the file there instead of creating yet
+    // another tab (mirrors VS Code's behaviour with the + button).
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", (leaf) => {
+        if (!leaf || leaf === this.previewLeaf) return;
+        if (leaf.view.getViewType() === "empty") {
+          this.setAsPreview(leaf);
+        }
+      })
+    );
+
     this.app.workspace.onLayoutReady(() => this.initializeFileExplorerStyling());
     this.syncTabHandlers();
   }
@@ -415,9 +427,11 @@ export default class OpenLikeVSC extends Plugin {
     }
 
     if (this.previewLeaf && previewAlive) {
-      await this.previewLeaf.openFile(file);
+      const leaf = this.previewLeaf;
+      await leaf.openFile(file);
       // Re-apply the style in case it was lost during the file switch.
-      this.applyPreviewStyle(this.previewLeaf, true);
+      this.applyPreviewStyle(leaf, true);
+      this.app.workspace.setActiveLeaf(leaf, { focus: true });
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
