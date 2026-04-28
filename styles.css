@@ -3,10 +3,19 @@
  * Pinned tab: default Obsidian style (no override needed)
  */
 
-/* Tab title text — italic grey when the tab is a preview */
+/* Tab title text — italic when the tab is a preview */
 .workspace-tab-header[data-vsc-preview] .workspace-tab-header-inner-title {
-  color: var(--text-muted) !important;
   font-style: italic;
+}
+
+/* Preview tab without a file nav colour — use muted text */
+.workspace-tab-header[data-vsc-preview]:not([data-vsc-tab-color]) .workspace-tab-header-inner-title {
+  color: var(--text-muted) !important;
+}
+
+/* Tab with a file nav colour — mirror the same colour shown in the file explorer */
+.workspace-tab-header[data-vsc-tab-color] .workspace-tab-header-inner-title {
+  color: var(--vsc-tab-file-color) !important;
 }
 
 /*
@@ -22,6 +31,25 @@
   display: flex;
   align-items: center;
   min-width: 0;
+}
+
+/* File explorer nav icons (files and folders). */
+.vsc-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  margin-inline-end: 5px;
+  color: inherit;
+  opacity: 0.85;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+.vsc-nav-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .nav-file-title[data-vsc-file-state] .nav-file-title-content {
@@ -85,23 +113,27 @@
 
 .vsc-tag-list-item {
   display: grid;
-  grid-template-columns: minmax(4.5rem, 5rem) minmax(0, 1fr) 2rem;
+  grid-template-columns: 8rem minmax(0, 1fr) 2rem;
   align-items: center;
-  min-height: 38px;
-  padding: 6px 8px;
+  min-height: 32px;
+  padding: 4px 8px;
   border-block-end: 1px solid var(--background-modifier-border);
-  column-gap: 12px;
+  column-gap: 8px;
 }
 
 .vsc-tag-row-title {
   min-width: 0;
 }
 
-.vsc-tag-fixed-title,
 .vsc-tag-title-input {
   display: block;
   width: 100%;
+  height: 26px;
+  padding: 0;
   overflow: hidden;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--text-normal);
   font-size: var(--font-ui-small);
   font-weight: var(--font-semibold);
@@ -110,16 +142,24 @@
   white-space: nowrap;
 }
 
-.vsc-tag-title-input {
-  height: 26px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 .vsc-tag-title-input:focus {
   box-shadow: 0 1px 0 var(--text-accent);
+  outline: none;
+}
+
+/* Read-only archive tag: visually locked */
+.vsc-tag-title-input.is-readonly {
+  cursor: default;
+  color: var(--text-muted);
+  font-style: italic;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding-inline: 6px;
+}
+
+.vsc-tag-title-input.is-readonly:focus {
+  box-shadow: none;
 }
 
 .vsc-tag-row-colors {
@@ -129,26 +169,42 @@
 .vsc-tag-color-choices {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
 }
 
 .vsc-tag-color-choice {
+  position: relative;
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid var(--background-modifier-border);
+  border: 1px solid color-mix(in srgb, var(--vsc-setting-color) 55%, transparent);
   border-radius: 999px;
   appearance: none;
   background: var(--vsc-setting-color) !important;
-  box-shadow: inset 0 0 0 2px var(--background-primary);
+  box-shadow: none;
   cursor: pointer;
 }
 
 .vsc-tag-color-choice[data-selected="true"] {
-  border-color: var(--text-accent);
-  box-shadow:
-    inset 0 0 0 2px var(--background-primary),
-    0 0 0 2px color-mix(in srgb, var(--text-accent) 32%, transparent);
+  border-color: var(--vsc-setting-color);
+}
+
+.vsc-tag-color-choice[data-selected="true"]::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
 }
 
 .vsc-tag-row-actions {

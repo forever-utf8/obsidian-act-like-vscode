@@ -21,6 +21,8 @@ const TAB_HANDLER_ATTR = "data-vsc-handler";
 const FILE_STATE_ATTR = "data-vsc-file-state";
 // Attribute placed on a folder title when one of its descendants is unarchived.
 const FOLDER_STATE_ATTR = "data-vsc-folder-state";
+// Attribute placed on a tab header to indicate it has a file nav colour.
+const TAB_COLOR_ATTR = "data-vsc-tab-color";
 
 const BADGE_CONTAINER_CLASS = "vsc-nav-tag-badges";
 const BADGE_CLASS = "vsc-nav-tag-badge";
@@ -29,12 +31,38 @@ const BADGE_SIGNATURE_ATTR = "data-vsc-badge-signature";
 const FILE_COLOR_PROP = "--vsc-nav-file-color";
 const FOLDER_COLOR_PROP = "--vsc-nav-folder-color";
 const TAG_COLOR_PROP = "--vsc-nav-tag-color";
+const TAB_COLOR_PROP = "--vsc-tab-file-color";
+
+const ICON_CLASS = "vsc-nav-icon";
+const ICON_ATTR = "data-vsc-icon";
+
+// SVG icon strings — use currentColor so they inherit the surrounding text colour.
+const FOLDER_CLOSED_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+const FOLDER_OPEN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/><circle cx="14" cy="15" r="1"/></svg>`;
+const TEXT_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M3 16v-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5V16"/><path d="M6 22h2"/><path d="M7 14v8"/></svg>`;
+const CODE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22h4a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M5 14a1 1 0 0 0-1 1v2a1 1 0 0 1-1 1 1 1 0 0 1 1 1v2a1 1 0 0 0 1 1"/><path d="M9 22a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-2a1 1 0 0 0-1-1"/></svg>`;
+const IMAGE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+
+const TEXT_FILE_EXTENSIONS = new Set(["md", "markdown", "txt", "text", "org", "rst"]);
+const CODE_FILE_EXTENSIONS = new Set([
+  "js", "mjs", "cjs", "ts", "jsx", "tsx",
+  "py", "rb", "go", "rs", "c", "cpp", "cc", "h", "hpp", "cs", "java", "php", "swift", "kt",
+  "css", "scss", "sass", "less",
+  "html", "htm", "xml", "xhtml", "svg",
+  "json", "jsonc", "yaml", "yml", "toml",
+  "sh", "bash", "zsh", "fish", "ps1", "bat",
+  "sql", "graphql", "gql", "vue", "svelte", "astro",
+  "r", "lua", "dart", "ex", "exs",
+]);
+const IMAGE_FILE_EXTENSIONS = new Set([
+  "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "tiff", "tif", "avif", "heic", "heif",
+]);
 
 const ARCHIVE_LABEL = "归档";
 const ARCHIVE_TAG = "#归档";
 const UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 const MAX_TAG_CONFIGS = 8;
-const MAX_TAG_LABEL_CHARS = 5;
+const MAX_TAG_LABEL_CHARS = 10;
 
 /**
  * Thin wrapper so we can access the internal `tabHeaderEl` without casting everywhere.
@@ -67,6 +95,7 @@ interface StoredTagConfig {
 
 interface PluginSettings {
   readonly tags: readonly StoredTagConfig[];
+  readonly navIcons: boolean;
 }
 
 interface TagConfig {
@@ -118,6 +147,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
       colorId: "gray",
     },
   ],
+  navIcons: true,
 };
 
 const DEFAULT_TAG_CONFIGS: readonly TagConfig[] = [
@@ -157,6 +187,7 @@ function isTagColorId(value: unknown): value is TagColorId {
 function defaultSettings(): PluginSettings {
   return {
     tags: DEFAULT_SETTINGS.tags.map((tag) => ({ ...tag })),
+    navIcons: DEFAULT_SETTINGS.navIcons,
   };
 }
 
@@ -220,6 +251,12 @@ export default class OpenLikeVSC extends Plugin {
     document.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
       el.removeAttribute(PREVIEW_ATTR);
     });
+
+    // Strip all tab colour markers.
+    document.querySelectorAll<HTMLElement>(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
+      el.removeAttribute(TAB_COLOR_ATTR);
+      el.style.removeProperty(TAB_COLOR_PROP);
+    });
   }
 
   // ── Settings ───────────────────────────────────────────────────────────────
@@ -244,6 +281,7 @@ export default class OpenLikeVSC extends Plugin {
 
     const nextName = this.nextTagName();
     this.settings = {
+      ...this.settings,
       tags: [...this.settings.tags, { name: nextName, colorId: "blue" }],
     };
     await this.persistSettings();
@@ -256,7 +294,7 @@ export default class OpenLikeVSC extends Plugin {
     const tags = this.settings.tags.map((tag, tagIndex) =>
       tagIndex === index ? { ...tag, name } : tag
     );
-    this.settings = this.normalizeSettings({ tags });
+    this.settings = this.normalizeSettings({ ...this.settings, tags });
     await this.persistSettings();
   }
 
@@ -266,7 +304,7 @@ export default class OpenLikeVSC extends Plugin {
     const tags = this.settings.tags.map((tag, tagIndex) =>
       tagIndex === index ? { ...tag, colorId } : tag
     );
-    this.settings = this.normalizeSettings({ tags });
+    this.settings = this.normalizeSettings({ ...this.settings, tags });
     await this.persistSettings();
   }
 
@@ -274,9 +312,24 @@ export default class OpenLikeVSC extends Plugin {
     if (this.isArchiveTagIndex(index)) return;
 
     this.settings = this.normalizeSettings({
+      ...this.settings,
       tags: this.settings.tags.filter((_tag, tagIndex) => tagIndex !== index),
     });
     await this.persistSettings();
+  }
+
+  isNavIconsEnabled(): boolean {
+    return this.settings.navIcons;
+  }
+
+  async setNavIcons(enabled: boolean): Promise<void> {
+    this.settings = { ...this.settings, navIcons: enabled };
+    await this.saveData(this.settings);
+    if (!enabled) {
+      document.querySelectorAll<HTMLElement>(`.${ICON_CLASS}`).forEach((el) => el.remove());
+    } else {
+      this.scheduleFileExplorerSync();
+    }
   }
 
   private async loadSettings(): Promise<void> {
@@ -292,8 +345,11 @@ export default class OpenLikeVSC extends Plugin {
   }
 
   private normalizeSettings(data: unknown): PluginSettings {
-    const rawTags =
-      this.isSettingsLike(data) && Array.isArray(data.tags) ? data.tags : [];
+    const raw = typeof data === "object" && data !== null
+      ? (data as Record<string, unknown>)
+      : {};
+
+    const rawTags = Array.isArray(raw.tags) ? raw.tags : [];
 
     const archiveTag = this.normalizeArchiveTag(rawTags[0]);
     const customTags = rawTags
@@ -304,8 +360,11 @@ export default class OpenLikeVSC extends Plugin {
         colorId: tag.colorId,
       }));
 
+    const navIcons = typeof raw.navIcons === "boolean" ? raw.navIcons : true;
+
     return {
       tags: [archiveTag, ...customTags].slice(0, MAX_TAG_CONFIGS),
+      navIcons,
     };
   }
 
@@ -758,7 +817,7 @@ export default class OpenLikeVSC extends Plugin {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["data-path"],
+      attributeFilter: ["data-path", "class"],
     });
   }
 
@@ -768,20 +827,27 @@ export default class OpenLikeVSC extends Plugin {
   }
 
   private shouldSyncForMutation(mutation: MutationRecord): boolean {
-    if (mutation.type === "attributes") return true;
+    if (mutation.type === "attributes") {
+      if (mutation.attributeName === "class") {
+        // Only sync for class changes on nav-folder elements (collapse/expand toggling).
+        return (mutation.target as Element).classList.contains("nav-folder");
+      }
+      return true; // data-path attribute change
+    }
 
     const changedNodes = [...mutation.addedNodes, ...mutation.removedNodes];
     if (!changedNodes.length) return false;
 
-    return !changedNodes.every((node) => this.isPluginBadgeNode(node));
+    return !changedNodes.every((node) => this.isPluginOwnedNode(node));
   }
 
-  private isPluginBadgeNode(node: Node): boolean {
+  private isPluginOwnedNode(node: Node): boolean {
     if (!(node instanceof HTMLElement)) return false;
     return (
       node.classList.contains(BADGE_CONTAINER_CLASS) ||
       node.classList.contains(BADGE_CLASS) ||
-      node.closest(`.${BADGE_CONTAINER_CLASS}`) !== null
+      node.closest(`.${BADGE_CONTAINER_CLASS}`) !== null ||
+      node.classList.contains(ICON_CLASS)
     );
   }
 
@@ -810,11 +876,35 @@ export default class OpenLikeVSC extends Plugin {
     document
       .querySelectorAll<HTMLElement>(".nav-folder-title[data-path]")
       .forEach((titleEl) => this.decorateFolderTitle(titleEl));
+
+    this.syncTabColors();
+  }
+
+  private syncTabColors(): void {
+    this.app.workspace.iterateAllLeaves((leaf) => {
+      const tabEl = this.tabHeaderEl(leaf);
+      if (!tabEl) return;
+
+      const file = leaf.view instanceof FileView ? leaf.view.file : null;
+      const state = file ? this.fileStates.get(file.path) : null;
+
+      if (state) {
+        tabEl.setAttribute(TAB_COLOR_ATTR, "");
+        tabEl.style.setProperty(TAB_COLOR_PROP, state.color);
+      } else {
+        tabEl.removeAttribute(TAB_COLOR_ATTR);
+        tabEl.style.removeProperty(TAB_COLOR_PROP);
+      }
+    });
   }
 
   private decorateFileTitle(titleEl: HTMLElement): void {
     const path = titleEl.getAttribute("data-path");
     const state = path ? this.fileStates.get(path) : null;
+
+    if (this.settings.navIcons) {
+      this.injectFileIcon(titleEl);
+    }
 
     if (!state) {
       this.clearFileTitleDecoration(titleEl);
@@ -830,6 +920,10 @@ export default class OpenLikeVSC extends Plugin {
   }
 
   private decorateFolderTitle(titleEl: HTMLElement): void {
+    if (this.settings.navIcons) {
+      this.injectFolderIcon(titleEl);
+    }
+
     const path = titleEl.getAttribute("data-path");
 
     if (path && this.unarchivedFolderPaths.has(path)) {
@@ -839,6 +933,55 @@ export default class OpenLikeVSC extends Plugin {
     }
 
     this.clearFolderTitleDecoration(titleEl);
+  }
+
+  private injectFileIcon(titleEl: HTMLElement): void {
+    const path = titleEl.getAttribute("data-path") ?? "";
+    const ext = path.split(".").pop()?.toLowerCase() ?? "";
+    const svg = this.getFileIconSvg(ext);
+    this.upsertNavIcon(titleEl, ext, svg, ".nav-file-title-content");
+  }
+
+  private injectFolderIcon(titleEl: HTMLElement): void {
+    const isCollapsed =
+      titleEl.closest(".nav-folder")?.classList.contains("is-collapsed") ?? true;
+    const signature = isCollapsed ? "folder-closed" : "folder-open";
+    const svg = isCollapsed ? FOLDER_CLOSED_SVG : FOLDER_OPEN_SVG;
+    this.upsertNavIcon(titleEl, signature, svg, ".nav-folder-title-content");
+  }
+
+  private upsertNavIcon(
+    titleEl: HTMLElement,
+    signature: string,
+    svg: string,
+    anchorSelector: string
+  ): void {
+    const existing = titleEl.querySelector<HTMLElement>(`:scope > .${ICON_CLASS}`);
+    if (existing?.getAttribute(ICON_ATTR) === signature) return;
+
+    const iconEl = titleEl.ownerDocument.createElement("span");
+    iconEl.className = ICON_CLASS;
+    iconEl.setAttribute(ICON_ATTR, signature);
+    iconEl.setAttribute("aria-hidden", "true");
+    iconEl.innerHTML = svg;
+
+    if (existing) {
+      existing.replaceWith(iconEl);
+    } else {
+      const anchor = titleEl.querySelector<HTMLElement>(anchorSelector);
+      if (anchor) {
+        titleEl.insertBefore(iconEl, anchor);
+      } else {
+        titleEl.prepend(iconEl);
+      }
+    }
+  }
+
+  private getFileIconSvg(ext: string): string {
+    if (TEXT_FILE_EXTENSIONS.has(ext)) return TEXT_FILE_SVG;
+    if (CODE_FILE_EXTENSIONS.has(ext)) return CODE_FILE_SVG;
+    if (IMAGE_FILE_EXTENSIONS.has(ext)) return IMAGE_FILE_SVG;
+    return TEXT_FILE_SVG;
   }
 
   private syncTagBadges(
@@ -914,6 +1057,10 @@ export default class OpenLikeVSC extends Plugin {
     document
       .querySelectorAll<HTMLElement>(`.nav-folder-title[${FOLDER_STATE_ATTR}]`)
       .forEach((titleEl) => this.clearFolderTitleDecoration(titleEl));
+
+    document
+      .querySelectorAll<HTMLElement>(`.${ICON_CLASS}`)
+      .forEach((iconEl) => iconEl.remove());
   }
 
   // ── Utilities ──────────────────────────────────────────────────────────────
@@ -969,9 +1116,25 @@ class OpenLikeVSCSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
+      .setName("像 VS Code 一样打开标签页")
+      .setDesc("单击预览，双击固定。")
+      .setHeading();
+
+    new Setting(containerEl)
+      .setName("导航栏图标")
+      .setDesc("克制的为文件导航栏添加图标。")
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.isNavIconsEnabled());
+        toggle.onChange(async (value) => {
+          await this.plugin.setNavIcons(value);
+        });
+      });
+
+    new Setting(containerEl)
       .setName("标签")
       .setDesc(
-        `配置文件导航栏中识别的标签。最多 ${MAX_TAG_CONFIGS} 个，标签名最多 ${MAX_TAG_LABEL_CHARS} 字。`
+        "配置标签，在文件中使用原生 # 添加标签。" +
+        "标记为归档的文件会有单独的样式，其他标签展示在文件标题右侧。"
       )
       .setHeading();
 
@@ -995,7 +1158,16 @@ class OpenLikeVSCSettingTab extends PluginSettingTab {
     const titleEl = rowEl.createDiv({ cls: "vsc-tag-row-title" });
 
     if (isArchive) {
-      titleEl.createSpan({ text: ARCHIVE_LABEL, cls: "vsc-tag-fixed-title" });
+      titleEl.createEl("input", {
+        cls: "vsc-tag-title-input is-readonly",
+        attr: {
+          type: "text",
+          value: ARCHIVE_LABEL,
+          readonly: "",
+          tabindex: "-1",
+          "aria-label": "固定标签（不可编辑）",
+        },
+      });
     } else {
       const titleInput = titleEl.createEl("input", {
         cls: "vsc-tag-title-input",
@@ -1007,7 +1179,11 @@ class OpenLikeVSCSettingTab extends PluginSettingTab {
         },
       });
       titleInput.addEventListener("input", () => {
-        void this.plugin.updateTagName(index, titleInput.value);
+        const truncated = Array.from(titleInput.value)
+          .slice(0, MAX_TAG_LABEL_CHARS)
+          .join("");
+        if (titleInput.value !== truncated) titleInput.value = truncated;
+        void this.plugin.updateTagName(index, truncated);
       });
     }
 

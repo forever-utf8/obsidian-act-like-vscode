@@ -28,17 +28,94 @@ var PREVIEW_ATTR = "data-vsc-preview";
 var TAB_HANDLER_ATTR = "data-vsc-handler";
 var FILE_STATE_ATTR = "data-vsc-file-state";
 var FOLDER_STATE_ATTR = "data-vsc-folder-state";
+var TAB_COLOR_ATTR = "data-vsc-tab-color";
 var BADGE_CONTAINER_CLASS = "vsc-nav-tag-badges";
 var BADGE_CLASS = "vsc-nav-tag-badge";
 var BADGE_SIGNATURE_ATTR = "data-vsc-badge-signature";
 var FILE_COLOR_PROP = "--vsc-nav-file-color";
 var FOLDER_COLOR_PROP = "--vsc-nav-folder-color";
 var TAG_COLOR_PROP = "--vsc-nav-tag-color";
+var TAB_COLOR_PROP = "--vsc-tab-file-color";
+var ICON_CLASS = "vsc-nav-icon";
+var ICON_ATTR = "data-vsc-icon";
+var FOLDER_CLOSED_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+var FOLDER_OPEN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/><circle cx="14" cy="15" r="1"/></svg>`;
+var TEXT_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M3 16v-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5V16"/><path d="M6 22h2"/><path d="M7 14v8"/></svg>`;
+var CODE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22h4a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M5 14a1 1 0 0 0-1 1v2a1 1 0 0 1-1 1 1 1 0 0 1 1 1v2a1 1 0 0 0 1 1"/><path d="M9 22a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-2a1 1 0 0 0-1-1"/></svg>`;
+var IMAGE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+var TEXT_FILE_EXTENSIONS = /* @__PURE__ */ new Set(["md", "markdown", "txt", "text", "org", "rst"]);
+var CODE_FILE_EXTENSIONS = /* @__PURE__ */ new Set([
+  "js",
+  "mjs",
+  "cjs",
+  "ts",
+  "jsx",
+  "tsx",
+  "py",
+  "rb",
+  "go",
+  "rs",
+  "c",
+  "cpp",
+  "cc",
+  "h",
+  "hpp",
+  "cs",
+  "java",
+  "php",
+  "swift",
+  "kt",
+  "css",
+  "scss",
+  "sass",
+  "less",
+  "html",
+  "htm",
+  "xml",
+  "xhtml",
+  "svg",
+  "json",
+  "jsonc",
+  "yaml",
+  "yml",
+  "toml",
+  "sh",
+  "bash",
+  "zsh",
+  "fish",
+  "ps1",
+  "bat",
+  "sql",
+  "graphql",
+  "gql",
+  "vue",
+  "svelte",
+  "astro",
+  "r",
+  "lua",
+  "dart",
+  "ex",
+  "exs"
+]);
+var IMAGE_FILE_EXTENSIONS = /* @__PURE__ */ new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "bmp",
+  "ico",
+  "tiff",
+  "tif",
+  "avif",
+  "heic",
+  "heif"
+]);
 var ARCHIVE_LABEL = "\u5F52\u6863";
 var ARCHIVE_TAG = "#\u5F52\u6863";
 var UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 var MAX_TAG_CONFIGS = 8;
-var MAX_TAG_LABEL_CHARS = 5;
+var MAX_TAG_LABEL_CHARS = 10;
 var TAG_COLOR_OPTIONS = [
   { id: "gray", label: "\u7070\u8272", value: "var(--text-muted)", swatch: "#8a8a8a" },
   { id: "red", label: "\u7EA2\u8272", value: "var(--color-red, #e93147)", swatch: "#e93147" },
@@ -55,7 +132,8 @@ var DEFAULT_SETTINGS = {
       name: ARCHIVE_LABEL,
       colorId: "gray"
     }
-  ]
+  ],
+  navIcons: true
 };
 var DEFAULT_TAG_CONFIGS = [
   {
@@ -84,7 +162,8 @@ function isTagColorId(value) {
 }
 function defaultSettings() {
   return {
-    tags: DEFAULT_SETTINGS.tags.map((tag) => ({ ...tag }))
+    tags: DEFAULT_SETTINGS.tags.map((tag) => ({ ...tag })),
+    navIcons: DEFAULT_SETTINGS.navIcons
   };
 }
 var OpenLikeVSC = class extends import_obsidian.Plugin {
@@ -131,6 +210,10 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     document.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
       el.removeAttribute(PREVIEW_ATTR);
     });
+    document.querySelectorAll(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
+      el.removeAttribute(TAB_COLOR_ATTR);
+      el.style.removeProperty(TAB_COLOR_PROP);
+    });
   }
   // ── Settings ───────────────────────────────────────────────────────────────
   getTagSettings() {
@@ -149,6 +232,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     }
     const nextName = this.nextTagName();
     this.settings = {
+      ...this.settings,
       tags: [...this.settings.tags, { name: nextName, colorId: "blue" }]
     };
     await this.persistSettings();
@@ -159,7 +243,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     const tags = this.settings.tags.map(
       (tag, tagIndex) => tagIndex === index ? { ...tag, name } : tag
     );
-    this.settings = this.normalizeSettings({ tags });
+    this.settings = this.normalizeSettings({ ...this.settings, tags });
     await this.persistSettings();
   }
   async updateTagColor(index, colorId) {
@@ -167,15 +251,28 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     const tags = this.settings.tags.map(
       (tag, tagIndex) => tagIndex === index ? { ...tag, colorId } : tag
     );
-    this.settings = this.normalizeSettings({ tags });
+    this.settings = this.normalizeSettings({ ...this.settings, tags });
     await this.persistSettings();
   }
   async removeTagSetting(index) {
     if (this.isArchiveTagIndex(index)) return;
     this.settings = this.normalizeSettings({
+      ...this.settings,
       tags: this.settings.tags.filter((_tag, tagIndex) => tagIndex !== index)
     });
     await this.persistSettings();
+  }
+  isNavIconsEnabled() {
+    return this.settings.navIcons;
+  }
+  async setNavIcons(enabled) {
+    this.settings = { ...this.settings, navIcons: enabled };
+    await this.saveData(this.settings);
+    if (!enabled) {
+      document.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove());
+    } else {
+      this.scheduleFileExplorerSync();
+    }
   }
   async loadSettings() {
     this.settings = this.normalizeSettings(await this.loadData());
@@ -188,14 +285,17 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     this.scheduleFileExplorerSync();
   }
   normalizeSettings(data) {
-    const rawTags = this.isSettingsLike(data) && Array.isArray(data.tags) ? data.tags : [];
+    const raw = typeof data === "object" && data !== null ? data : {};
+    const rawTags = Array.isArray(raw.tags) ? raw.tags : [];
     const archiveTag = this.normalizeArchiveTag(rawTags[0]);
     const customTags = rawTags.slice(1, MAX_TAG_CONFIGS).filter((tag) => this.isStoredTagConfig(tag)).map((tag) => ({
       name: normalizeTagLabel(tag.name),
       colorId: tag.colorId
     }));
+    const navIcons = typeof raw.navIcons === "boolean" ? raw.navIcons : true;
     return {
-      tags: [archiveTag, ...customTags].slice(0, MAX_TAG_CONFIGS)
+      tags: [archiveTag, ...customTags].slice(0, MAX_TAG_CONFIGS),
+      navIcons
     };
   }
   isSettingsLike(data) {
@@ -560,7 +660,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["data-path"]
+      attributeFilter: ["data-path", "class"]
     });
   }
   disconnectFileExplorerObserver() {
@@ -568,14 +668,19 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     this.fileExplorerObserver = null;
   }
   shouldSyncForMutation(mutation) {
-    if (mutation.type === "attributes") return true;
+    if (mutation.type === "attributes") {
+      if (mutation.attributeName === "class") {
+        return mutation.target.classList.contains("nav-folder");
+      }
+      return true;
+    }
     const changedNodes = [...mutation.addedNodes, ...mutation.removedNodes];
     if (!changedNodes.length) return false;
-    return !changedNodes.every((node) => this.isPluginBadgeNode(node));
+    return !changedNodes.every((node) => this.isPluginOwnedNode(node));
   }
-  isPluginBadgeNode(node) {
+  isPluginOwnedNode(node) {
     if (!(node instanceof HTMLElement)) return false;
-    return node.classList.contains(BADGE_CONTAINER_CLASS) || node.classList.contains(BADGE_CLASS) || node.closest(`.${BADGE_CONTAINER_CLASS}`) !== null;
+    return node.classList.contains(BADGE_CONTAINER_CLASS) || node.classList.contains(BADGE_CLASS) || node.closest(`.${BADGE_CONTAINER_CLASS}`) !== null || node.classList.contains(ICON_CLASS);
   }
   scheduleFileExplorerSync() {
     if (!this.fileExplorerInitialized || this.fileExplorerSyncFrame !== null) {
@@ -596,10 +701,29 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
       (titleEl) => this.decorateFileTitle(titleEl)
     );
     document.querySelectorAll(".nav-folder-title[data-path]").forEach((titleEl) => this.decorateFolderTitle(titleEl));
+    this.syncTabColors();
+  }
+  syncTabColors() {
+    this.app.workspace.iterateAllLeaves((leaf) => {
+      const tabEl = this.tabHeaderEl(leaf);
+      if (!tabEl) return;
+      const file = leaf.view instanceof import_obsidian.FileView ? leaf.view.file : null;
+      const state = file ? this.fileStates.get(file.path) : null;
+      if (state) {
+        tabEl.setAttribute(TAB_COLOR_ATTR, "");
+        tabEl.style.setProperty(TAB_COLOR_PROP, state.color);
+      } else {
+        tabEl.removeAttribute(TAB_COLOR_ATTR);
+        tabEl.style.removeProperty(TAB_COLOR_PROP);
+      }
+    });
   }
   decorateFileTitle(titleEl) {
     const path = titleEl.getAttribute("data-path");
     const state = path ? this.fileStates.get(path) : null;
+    if (this.settings.navIcons) {
+      this.injectFileIcon(titleEl);
+    }
     if (!state) {
       this.clearFileTitleDecoration(titleEl);
       return;
@@ -612,6 +736,9 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     this.syncTagBadges(titleEl, state.matches);
   }
   decorateFolderTitle(titleEl) {
+    if (this.settings.navIcons) {
+      this.injectFolderIcon(titleEl);
+    }
     const path = titleEl.getAttribute("data-path");
     if (path && this.unarchivedFolderPaths.has(path)) {
       titleEl.setAttribute(FOLDER_STATE_ATTR, "contains-unarchived");
@@ -619,6 +746,43 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
       return;
     }
     this.clearFolderTitleDecoration(titleEl);
+  }
+  injectFileIcon(titleEl) {
+    const path = titleEl.getAttribute("data-path") ?? "";
+    const ext = path.split(".").pop()?.toLowerCase() ?? "";
+    const svg = this.getFileIconSvg(ext);
+    this.upsertNavIcon(titleEl, ext, svg, ".nav-file-title-content");
+  }
+  injectFolderIcon(titleEl) {
+    const isCollapsed = titleEl.closest(".nav-folder")?.classList.contains("is-collapsed") ?? true;
+    const signature = isCollapsed ? "folder-closed" : "folder-open";
+    const svg = isCollapsed ? FOLDER_CLOSED_SVG : FOLDER_OPEN_SVG;
+    this.upsertNavIcon(titleEl, signature, svg, ".nav-folder-title-content");
+  }
+  upsertNavIcon(titleEl, signature, svg, anchorSelector) {
+    const existing = titleEl.querySelector(`:scope > .${ICON_CLASS}`);
+    if (existing?.getAttribute(ICON_ATTR) === signature) return;
+    const iconEl = titleEl.ownerDocument.createElement("span");
+    iconEl.className = ICON_CLASS;
+    iconEl.setAttribute(ICON_ATTR, signature);
+    iconEl.setAttribute("aria-hidden", "true");
+    iconEl.innerHTML = svg;
+    if (existing) {
+      existing.replaceWith(iconEl);
+    } else {
+      const anchor = titleEl.querySelector(anchorSelector);
+      if (anchor) {
+        titleEl.insertBefore(iconEl, anchor);
+      } else {
+        titleEl.prepend(iconEl);
+      }
+    }
+  }
+  getFileIconSvg(ext) {
+    if (TEXT_FILE_EXTENSIONS.has(ext)) return TEXT_FILE_SVG;
+    if (CODE_FILE_EXTENSIONS.has(ext)) return CODE_FILE_SVG;
+    if (IMAGE_FILE_EXTENSIONS.has(ext)) return IMAGE_FILE_SVG;
+    return TEXT_FILE_SVG;
   }
   syncTagBadges(titleEl, matches) {
     const existingContainer = this.findBadgeContainer(titleEl);
@@ -670,6 +834,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     document.querySelectorAll(`.nav-file-title[${FILE_STATE_ATTR}]`).forEach((titleEl) => this.clearFileTitleDecoration(titleEl));
     document.querySelectorAll(`.${BADGE_CONTAINER_CLASS}`).forEach((badgeContainer) => badgeContainer.remove());
     document.querySelectorAll(`.nav-folder-title[${FOLDER_STATE_ATTR}]`).forEach((titleEl) => this.clearFolderTitleDecoration(titleEl));
+    document.querySelectorAll(`.${ICON_CLASS}`).forEach((iconEl) => iconEl.remove());
   }
   // ── Utilities ──────────────────────────────────────────────────────────────
   /**
@@ -715,8 +880,15 @@ var OpenLikeVSCSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
+    new import_obsidian.Setting(containerEl).setName("\u50CF VS Code \u4E00\u6837\u6253\u5F00\u6807\u7B7E\u9875").setDesc("\u5355\u51FB\u9884\u89C8\uFF0C\u53CC\u51FB\u56FA\u5B9A\u3002").setHeading();
+    new import_obsidian.Setting(containerEl).setName("\u5BFC\u822A\u680F\u56FE\u6807").setDesc("\u514B\u5236\u7684\u4E3A\u6587\u4EF6\u5BFC\u822A\u680F\u6DFB\u52A0\u56FE\u6807\u3002").addToggle((toggle) => {
+      toggle.setValue(this.plugin.isNavIconsEnabled());
+      toggle.onChange(async (value) => {
+        await this.plugin.setNavIcons(value);
+      });
+    });
     new import_obsidian.Setting(containerEl).setName("\u6807\u7B7E").setDesc(
-      `\u914D\u7F6E\u6587\u4EF6\u5BFC\u822A\u680F\u4E2D\u8BC6\u522B\u7684\u6807\u7B7E\u3002\u6700\u591A ${MAX_TAG_CONFIGS} \u4E2A\uFF0C\u6807\u7B7E\u540D\u6700\u591A ${MAX_TAG_LABEL_CHARS} \u5B57\u3002`
+      "\u914D\u7F6E\u6807\u7B7E\uFF0C\u5728\u6587\u4EF6\u4E2D\u4F7F\u7528\u539F\u751F # \u6DFB\u52A0\u6807\u7B7E\u3002\u6807\u8BB0\u4E3A\u5F52\u6863\u7684\u6587\u4EF6\u4F1A\u6709\u5355\u72EC\u7684\u6837\u5F0F\uFF0C\u5176\u4ED6\u6807\u7B7E\u5C55\u793A\u5728\u6587\u4EF6\u6807\u9898\u53F3\u4FA7\u3002"
     ).setHeading();
     const listEl = containerEl.createDiv({ cls: "vsc-tag-list" });
     this.plugin.getTagSettings().forEach((tag, index) => {
@@ -731,7 +903,16 @@ var OpenLikeVSCSettingTab = class extends import_obsidian.PluginSettingTab {
     });
     const titleEl = rowEl.createDiv({ cls: "vsc-tag-row-title" });
     if (isArchive) {
-      titleEl.createSpan({ text: ARCHIVE_LABEL, cls: "vsc-tag-fixed-title" });
+      titleEl.createEl("input", {
+        cls: "vsc-tag-title-input is-readonly",
+        attr: {
+          type: "text",
+          value: ARCHIVE_LABEL,
+          readonly: "",
+          tabindex: "-1",
+          "aria-label": "\u56FA\u5B9A\u6807\u7B7E\uFF08\u4E0D\u53EF\u7F16\u8F91\uFF09"
+        }
+      });
     } else {
       const titleInput = titleEl.createEl("input", {
         cls: "vsc-tag-title-input",
@@ -743,7 +924,9 @@ var OpenLikeVSCSettingTab = class extends import_obsidian.PluginSettingTab {
         }
       });
       titleInput.addEventListener("input", () => {
-        void this.plugin.updateTagName(index, titleInput.value);
+        const truncated = Array.from(titleInput.value).slice(0, MAX_TAG_LABEL_CHARS).join("");
+        if (titleInput.value !== truncated) titleInput.value = truncated;
+        void this.plugin.updateTagName(index, truncated);
       });
     }
     const colorEl = rowEl.createDiv({ cls: "vsc-tag-row-colors" });
