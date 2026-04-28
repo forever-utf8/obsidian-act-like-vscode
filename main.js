@@ -36,8 +36,7 @@ var FOLDER_COLOR_PROP = "--vsc-nav-folder-color";
 var TAG_COLOR_PROP = "--vsc-nav-tag-color";
 var ARCHIVE_LABEL = "\u5F52\u6863";
 var ARCHIVE_TAG = "#\u5F52\u6863";
-var UNTAGGED_FILE_COLOR = "var(--color-orange, #d9822b)";
-var UNARCHIVED_FOLDER_COLOR = "var(--color-blue, #2f80ed)";
+var UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 var MAX_TAG_CONFIGS = 8;
 var MAX_TAG_LABEL_CHARS = 5;
 var TAG_COLOR_OPTIONS = [
@@ -423,7 +422,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     const matchResult = this.matchConfiguredTags(cache);
     this.fileStates.set(file.path, {
       matches: matchResult.visibleMatches,
-      color: matchResult.archiveMatch?.color ?? matchResult.lastNonArchiveMatch?.color ?? UNTAGGED_FILE_COLOR,
+      color: matchResult.archiveMatch?.color ?? UNARCHIVED_COLOR,
       hasArchiveTag: matchResult.hasArchiveTag
     });
   }
@@ -616,7 +615,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     const path = titleEl.getAttribute("data-path");
     if (path && this.unarchivedFolderPaths.has(path)) {
       titleEl.setAttribute(FOLDER_STATE_ATTR, "contains-unarchived");
-      titleEl.style.setProperty(FOLDER_COLOR_PROP, UNARCHIVED_FOLDER_COLOR);
+      titleEl.style.setProperty(FOLDER_COLOR_PROP, UNARCHIVED_COLOR);
       return;
     }
     this.clearFolderTitleDecoration(titleEl);

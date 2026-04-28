@@ -32,8 +32,7 @@ const TAG_COLOR_PROP = "--vsc-nav-tag-color";
 
 const ARCHIVE_LABEL = "归档";
 const ARCHIVE_TAG = "#归档";
-const UNTAGGED_FILE_COLOR = "var(--color-orange, #d9822b)";
-const UNARCHIVED_FOLDER_COLOR = "var(--color-blue, #2f80ed)";
+const UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 const MAX_TAG_CONFIGS = 8;
 const MAX_TAG_LABEL_CHARS = 5;
 
@@ -581,10 +580,7 @@ export default class OpenLikeVSC extends Plugin {
     const matchResult = this.matchConfiguredTags(cache);
     this.fileStates.set(file.path, {
       matches: matchResult.visibleMatches,
-      color:
-        matchResult.archiveMatch?.color ??
-        matchResult.lastNonArchiveMatch?.color ??
-        UNTAGGED_FILE_COLOR,
+      color: matchResult.archiveMatch?.color ?? UNARCHIVED_COLOR,
       hasArchiveTag: matchResult.hasArchiveTag,
     });
   }
@@ -838,7 +834,7 @@ export default class OpenLikeVSC extends Plugin {
 
     if (path && this.unarchivedFolderPaths.has(path)) {
       titleEl.setAttribute(FOLDER_STATE_ATTR, "contains-unarchived");
-      titleEl.style.setProperty(FOLDER_COLOR_PROP, UNARCHIVED_FOLDER_COLOR);
+      titleEl.style.setProperty(FOLDER_COLOR_PROP, UNARCHIVED_COLOR);
       return;
     }
 
