@@ -8,7 +8,10 @@ import {
   TFile,
   TFolder,
   WorkspaceLeaf,
+  getIconIds,
+  setIcon,
   type CachedMetadata,
+  type IconName,
   type TAbstractFile,
   type TagCache,
 } from "obsidian";
@@ -36,13 +39,6 @@ const INLINE_TAG_COLOR_PROP = "--vsc-inline-tag-color";
 
 const ICON_CLASS = "vsc-nav-icon";
 const ICON_ATTR = "data-vsc-icon";
-
-// SVG icon strings — use currentColor so they inherit the surrounding text colour.
-const FOLDER_CLOSED_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
-const FOLDER_OPEN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/><circle cx="14" cy="15" r="1"/></svg>`;
-const TEXT_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M3 16v-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5V16"/><path d="M6 22h2"/><path d="M7 14v8"/></svg>`;
-const CODE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22h4a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M5 14a1 1 0 0 0-1 1v2a1 1 0 0 1-1 1 1 1 0 0 1 1 1v2a1 1 0 0 0 1 1"/><path d="M9 22a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-2a1 1 0 0 0-1-1"/></svg>`;
-const IMAGE_FILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
 
 const TEXT_FILE_EXTENSIONS = new Set(["md", "markdown", "txt", "text", "org", "rst"]);
 const CODE_FILE_EXTENSIONS = new Set([
@@ -179,6 +175,13 @@ function colorValue(colorId: TagColorId): string {
     TAG_COLOR_OPTIONS.find((option) => option.id === colorId)?.value ??
     TAG_COLOR_OPTIONS[0].value
   );
+}
+
+let availableIconIds: Set<string> | null = null;
+
+function firstAvailableIcon(...iconIds: readonly IconName[]): IconName {
+  availableIconIds ??= new Set(getIconIds());
+  return iconIds.find((iconId) => availableIconIds?.has(iconId)) ?? iconIds[0];
 }
 
 function cssStringValue(value: string): string {
@@ -965,22 +968,24 @@ export default class ActLikeVSCode extends Plugin {
   private injectFileIcon(titleEl: HTMLElement): void {
     const path = titleEl.getAttribute("data-path") ?? "";
     const ext = path.split(".").pop()?.toLowerCase() ?? "";
-    const svg = this.getFileIconSvg(ext);
-    this.upsertNavIcon(titleEl, ext, svg, ".nav-file-title-content");
+    const iconName = this.getFileIconName(ext);
+    this.upsertNavIcon(titleEl, ext, iconName, ".nav-file-title-content");
   }
 
   private injectFolderIcon(titleEl: HTMLElement): void {
     const isCollapsed =
       titleEl.closest(".nav-folder")?.classList.contains("is-collapsed") ?? true;
     const signature = isCollapsed ? "folder-closed" : "folder-open";
-    const svg = isCollapsed ? FOLDER_CLOSED_SVG : FOLDER_OPEN_SVG;
-    this.upsertNavIcon(titleEl, signature, svg, ".nav-folder-title-content");
+    const iconName = isCollapsed
+      ? firstAvailableIcon("folder-minus", "folder")
+      : firstAvailableIcon("folder-open-dot", "folder-open", "folder");
+    this.upsertNavIcon(titleEl, signature, iconName, ".nav-folder-title-content");
   }
 
   private upsertNavIcon(
     titleEl: HTMLElement,
     signature: string,
-    svg: string,
+    iconName: IconName,
     anchorSelector: string
   ): void {
     const existing = titleEl.querySelector<HTMLElement>(`:scope > .${ICON_CLASS}`);
@@ -990,7 +995,7 @@ export default class ActLikeVSCode extends Plugin {
     iconEl.className = ICON_CLASS;
     iconEl.setAttribute(ICON_ATTR, signature);
     iconEl.setAttribute("aria-hidden", "true");
-    iconEl.innerHTML = svg;
+    setIcon(iconEl, iconName);
 
     if (existing) {
       existing.replaceWith(iconEl);
@@ -1004,11 +1009,17 @@ export default class ActLikeVSCode extends Plugin {
     }
   }
 
-  private getFileIconSvg(ext: string): string {
-    if (TEXT_FILE_EXTENSIONS.has(ext)) return TEXT_FILE_SVG;
-    if (CODE_FILE_EXTENSIONS.has(ext)) return CODE_FILE_SVG;
-    if (IMAGE_FILE_EXTENSIONS.has(ext)) return IMAGE_FILE_SVG;
-    return TEXT_FILE_SVG;
+  private getFileIconName(ext: string): IconName {
+    if (TEXT_FILE_EXTENSIONS.has(ext)) {
+      return firstAvailableIcon("file-type-corner", "file-type", "file-text", "file");
+    }
+    if (CODE_FILE_EXTENSIONS.has(ext)) {
+      return firstAvailableIcon("file-braces-corner", "file-code-2", "file-code", "file");
+    }
+    if (IMAGE_FILE_EXTENSIONS.has(ext)) {
+      return firstAvailableIcon("image", "file-image", "file");
+    }
+    return firstAvailableIcon("file-type-corner", "file-text", "file");
   }
 
   private syncTagBadges(
@@ -1289,8 +1300,8 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
       .setDesc("克制的为文件导航栏添加图标。")
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.isNavIconsEnabled());
-        toggle.onChange(async (value) => {
-          await this.plugin.setNavIcons(value);
+        toggle.onChange((value) => {
+          void this.plugin.setNavIcons(value);
         });
       });
 
@@ -1363,9 +1374,8 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
         cls: "vsc-tag-delete-button",
         attr: { type: "button", "aria-label": "删除标签" },
       });
-      deleteButton.addEventListener("click", async () => {
-        await this.plugin.removeTagSetting(index);
-        this.display();
+      deleteButton.addEventListener("click", () => {
+        void this.handleDeleteTagClick(index);
       });
     }
   }
@@ -1379,25 +1389,38 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
     });
 
     addButton.disabled = this.plugin.getTagSettings().length >= MAX_TAG_CONFIGS;
-    addButton.addEventListener("click", async () => {
-      if (await this.plugin.addTagSetting()) {
-        this.display();
-        const inputs = this.containerEl.querySelectorAll<HTMLInputElement>(
-          ".vsc-tag-title-input:not(.is-readonly)"
-        );
-        const lastInput = inputs[inputs.length - 1];
-        if (lastInput) {
-          lastInput.focus();
-          lastInput.addEventListener("blur", async () => {
-            if (!lastInput.value.trim()) {
-              const tagCount = this.plugin.getTagSettings().length;
-              await this.plugin.removeTagSetting(tagCount - 1);
-              this.display();
-            }
-          }, { once: true });
-        }
-      }
+    addButton.addEventListener("click", () => {
+      void this.handleAddTagClick();
     });
+  }
+
+  private async handleDeleteTagClick(index: number): Promise<void> {
+    await this.plugin.removeTagSetting(index);
+    this.display();
+  }
+
+  private async handleAddTagClick(): Promise<void> {
+    if (!(await this.plugin.addTagSetting())) return;
+
+    this.display();
+    const inputs = this.containerEl.querySelectorAll<HTMLInputElement>(
+      ".vsc-tag-title-input:not(.is-readonly)"
+    );
+    const lastInput = inputs[inputs.length - 1];
+    if (!lastInput) return;
+
+    lastInput.focus();
+    lastInput.addEventListener("blur", () => {
+      void this.handleNewTagBlur(lastInput);
+    }, { once: true });
+  }
+
+  private async handleNewTagBlur(input: HTMLInputElement): Promise<void> {
+    if (input.value.trim()) return;
+
+    const tagCount = this.plugin.getTagSettings().length;
+    await this.plugin.removeTagSetting(tagCount - 1);
+    this.display();
   }
 
   private renderColorChoices(
