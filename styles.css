@@ -103,6 +103,103 @@
   white-space: nowrap;
 }
 
+/* ── Inline tag badges (reading view + live preview) ───────────────────── */
+/*
+ * The snippet style.css applies !important to .tag/.cm-hashtag globally.
+ * We use a more specific selector also with !important so our rules win.
+ */
+
+.markdown-reading-view a.tag,
+.markdown-preview-view a.tag,
+.markdown-rendered a.tag,
+.markdown-source-view.is-live-preview a.tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0px 3px !important;
+  border-radius: 3px !important;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--vsc-inline-tag-color, var(--text-muted)) 38%,
+      transparent
+    ) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--vsc-inline-tag-color, var(--text-muted)) 14%,
+    transparent
+  ) !important;
+  color: var(--vsc-inline-tag-color, var(--text-muted)) !important;
+  font-size: 0.7em !important;
+  font-weight: var(--tag-weight, var(--font-medium)) !important;
+  line-height: 1.4 !important;
+  text-decoration: none !important;
+  transition: none !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+.markdown-reading-view a.tag:hover,
+.markdown-preview-view a.tag:hover,
+.markdown-rendered a.tag:hover,
+.markdown-source-view.is-live-preview a.tag:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--vsc-inline-tag-color, var(--text-muted)) 22%,
+    transparent
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--vsc-inline-tag-color, var(--text-muted)) 55%,
+    transparent
+  ) !important;
+  color: var(--vsc-inline-tag-color, var(--text-muted)) !important;
+  text-decoration: none !important;
+}
+
+.markdown-source-view.is-live-preview span.cm-hashtag {
+  padding: 0px 3px !important;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--vsc-inline-tag-color, var(--text-muted)) 38%,
+      transparent
+    ) !important;
+  border-radius: 3px !important;
+  background-color: color-mix(
+    in srgb,
+    var(--vsc-inline-tag-color, var(--text-muted)) 14%,
+    transparent
+  ) !important;
+  color: var(--vsc-inline-tag-color, var(--text-muted)) !important;
+  font-size: 0.7em !important;
+  font-weight: var(--tag-weight, var(--font-medium)) !important;
+  line-height: 1.4 !important;
+  text-decoration: none !important;
+  transition: none !important;
+  vertical-align: middle !important;
+}
+
+.markdown-source-view.is-live-preview span.cm-hashtag-begin {
+  padding-inline-end: 0 !important;
+  border-inline-end: 0 !important;
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+.markdown-source-view.is-live-preview span.cm-hashtag-end {
+  padding-inline-start: 0 !important;
+  border-inline-start: 0 !important;
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+}
+
+.markdown-source-view.is-live-preview
+  span.cm-hashtag:not(.cm-hashtag-begin):not(.cm-hashtag-end) {
+  padding-inline: 0 !important;
+  border-inline: 0 !important;
+  border-radius: 0 !important;
+}
+
 /* Settings: compact list-style tag editor. */
 .vsc-tag-list {
   border: 1px solid var(--background-modifier-border);

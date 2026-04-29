@@ -32,6 +32,7 @@ const FILE_COLOR_PROP = "--vsc-nav-file-color";
 const FOLDER_COLOR_PROP = "--vsc-nav-folder-color";
 const TAG_COLOR_PROP = "--vsc-nav-tag-color";
 const TAB_COLOR_PROP = "--vsc-tab-file-color";
+const INLINE_TAG_COLOR_PROP = "--vsc-inline-tag-color";
 
 const ICON_CLASS = "vsc-nav-icon";
 const ICON_ATTR = "data-vsc-icon";
@@ -180,6 +181,10 @@ function colorValue(colorId: TagColorId): string {
   );
 }
 
+function cssStringValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 function isTagColorId(value: unknown): value is TagColorId {
   return TAG_COLOR_OPTIONS.some((option) => option.id === value);
 }
@@ -203,11 +208,15 @@ export default class ActLikeVSCode extends Plugin {
   private fileExplorerSyncFrame: number | null = null;
   private fileExplorerInitialized = false;
   private initialMetadataResolved = false;
+  private inlineTagStyleEl: HTMLStyleElement | null = null;
+  private inlineTagObserver: MutationObserver | null = null;
+  private inlineTagSyncFrame: number | null = null;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   override async onload(): Promise<void> {
     await this.loadSettings();
+    this.syncInlineTagStyles();
     this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
 
     // Capture phase fires before Obsidian's own bubble-phase handlers.
@@ -221,6 +230,13 @@ export default class ActLikeVSCode extends Plugin {
         this.syncTabHandlers();
         this.cleanupPreviewLeaf();
         this.scheduleFileExplorerSync();
+        this.scheduleInlineTagSync();
+      })
+    );
+
+    this.registerEvent(
+      this.app.workspace.on("file-open", () => {
+        this.scheduleInlineTagSync();
       })
     );
 
@@ -229,6 +245,7 @@ export default class ActLikeVSCode extends Plugin {
     // another tab (mirrors VS Code's behaviour with the + button).
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", (leaf) => {
+        this.scheduleInlineTagSync();
         if (!leaf || leaf === this.previewLeaf) return;
         if (leaf.view.getViewType() === "empty") {
           this.setAsPreview(leaf);
@@ -236,11 +253,22 @@ export default class ActLikeVSCode extends Plugin {
       })
     );
 
-    this.app.workspace.onLayoutReady(() => this.initializeFileExplorerStyling());
+    this.app.workspace.onLayoutReady(() => {
+      this.initializeFileExplorerStyling();
+      this.scheduleInlineTagSync();
+    });
+    this.installInlineTagObserver();
+    this.registerInlineTagInteractionEvents();
+    this.scheduleInlineTagSync();
     this.syncTabHandlers();
   }
 
   override onunload(): void {
+    this.inlineTagStyleEl?.remove();
+    this.inlineTagStyleEl = null;
+    this.disconnectInlineTagObserver();
+    this.cancelScheduledInlineTagSync();
+    this.clearInlineTagDecorations();
     this.disconnectFileExplorerObserver();
     this.cancelScheduledFileExplorerSync();
     this.clearFileExplorerDecorations();
@@ -337,6 +365,8 @@ export default class ActLikeVSCode extends Plugin {
   private async persistSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.tagConfigs = this.buildTagConfigs(this.settings);
+    this.syncInlineTagStyles();
+    this.scheduleInlineTagSync();
     this.rebuildFileStatusIndex();
     this.scheduleFileExplorerSync();
   }
@@ -1058,6 +1088,143 @@ export default class ActLikeVSCode extends Plugin {
     document
       .querySelectorAll<HTMLElement>(`.${ICON_CLASS}`)
       .forEach((iconEl) => iconEl.remove());
+  }
+
+  // ── Inline tag badge colours ───────────────────────────────────────────────
+
+  /**
+   * Injects a <style> element that maps each configured tag's href to its
+   * colour via --vsc-inline-tag-color. Re-runs whenever tag configs change.
+   */
+  private syncInlineTagStyles(): void {
+    if (!this.inlineTagStyleEl) {
+      this.inlineTagStyleEl = document.createElement("style");
+      this.inlineTagStyleEl.id = "vsc-inline-tag-colors";
+      document.head.appendChild(this.inlineTagStyleEl);
+    }
+
+    const rules: string[] = [];
+    this.tagConfigs.forEach((config) => {
+      const v = cssStringValue(config.normalizedTag);
+      rules.push(
+        `a.tag[href="${v}"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`,
+        `a.tag[href^="${v}/"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`,
+      );
+    });
+
+    this.inlineTagStyleEl.textContent = rules.join("\n");
+  }
+
+  private installInlineTagObserver(): void {
+    if (this.inlineTagObserver) return;
+
+    this.inlineTagObserver = new MutationObserver(() => {
+      this.scheduleInlineTagSync();
+    });
+    this.inlineTagObserver.observe(this.app.workspace.containerEl, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }
+
+  private registerInlineTagInteractionEvents(): void {
+    this.registerDomEvent(document, "selectionchange", () => {
+      this.scheduleInlineTagSync();
+    });
+    this.registerDomEvent(this.app.workspace.containerEl, "input", () => {
+      this.scheduleInlineTagSync();
+    });
+    this.registerDomEvent(this.app.workspace.containerEl, "keyup", () => {
+      this.scheduleInlineTagSync();
+    });
+    this.registerDomEvent(this.app.workspace.containerEl, "pointerup", () => {
+      this.scheduleInlineTagSync();
+    });
+  }
+
+  private disconnectInlineTagObserver(): void {
+    this.inlineTagObserver?.disconnect();
+    this.inlineTagObserver = null;
+  }
+
+  private scheduleInlineTagSync(): void {
+    if (this.inlineTagSyncFrame !== null) return;
+
+    this.inlineTagSyncFrame = window.requestAnimationFrame(() => {
+      this.inlineTagSyncFrame = null;
+      this.syncInlineTagElements();
+    });
+  }
+
+  private cancelScheduledInlineTagSync(): void {
+    if (this.inlineTagSyncFrame === null) return;
+    window.cancelAnimationFrame(this.inlineTagSyncFrame);
+    this.inlineTagSyncFrame = null;
+  }
+
+  private syncInlineTagElements(): void {
+    const visited = new Set<HTMLElement>();
+    document
+      .querySelectorAll<HTMLElement>(
+        ".markdown-source-view.is-live-preview span.cm-hashtag"
+      )
+      .forEach((tagEl) => {
+        if (visited.has(tagEl)) return;
+
+        const segments = this.collectInlineTagSegments(tagEl);
+        segments.forEach((segment) => visited.add(segment));
+
+        const tagText = segments.map((segment) => segment.textContent ?? "").join("");
+        const config = this.findBestTagConfig(normalizeTagName(tagText));
+        this.applyInlineTagColor(segments, config?.color ?? null);
+      });
+  }
+
+  private collectInlineTagSegments(tagEl: HTMLElement): HTMLElement[] {
+    let firstSegment = tagEl;
+    let previous = firstSegment.previousSibling;
+    while (this.isInlineTagSegment(previous)) {
+      firstSegment = previous;
+      previous = firstSegment.previousSibling;
+    }
+
+    const segments: HTMLElement[] = [];
+    let current: Node | null = firstSegment;
+    while (this.isInlineTagSegment(current)) {
+      segments.push(current);
+      current = current.nextSibling;
+    }
+
+    return segments;
+  }
+
+  private isInlineTagSegment(node: Node | null): node is HTMLElement {
+    return node instanceof HTMLElement && node.classList.contains("cm-hashtag");
+  }
+
+  private applyInlineTagColor(
+    segments: readonly HTMLElement[],
+    color: string | null
+  ): void {
+    segments.forEach((segment) => {
+      if (color) {
+        if (segment.style.getPropertyValue(INLINE_TAG_COLOR_PROP) !== color) {
+          segment.style.setProperty(INLINE_TAG_COLOR_PROP, color);
+        }
+        return;
+      }
+
+      segment.style.removeProperty(INLINE_TAG_COLOR_PROP);
+    });
+  }
+
+  private clearInlineTagDecorations(): void {
+    document
+      .querySelectorAll<HTMLElement>("span.cm-hashtag")
+      .forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
   }
 
   // ── Utilities ──────────────────────────────────────────────────────────────
