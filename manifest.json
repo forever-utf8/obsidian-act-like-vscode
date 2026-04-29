@@ -1,9 +1,9 @@
 {
-  "id": "open-like-vsc",
-  "name": "Open Like VSCode",
+  "id": "act-like-vscode",
+  "name": "Act Like VSCode",
   "version": "1.1.0",
   "minAppVersion": "1.8.9",
-  "description": "Opens notes with VSCode-style preview tabs: single-click previews, double-click pins.",
+  "description": "Act like VSCode in Obsidian: preview tabs on single-click, pin on double-click, file-state coloring, tag badges, and nav icons.",
   "author": "yntangxi",
   "isDesktopOnly": true
 }

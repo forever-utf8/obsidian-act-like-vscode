@@ -20,7 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // main.ts
 var main_exports = {};
 __export(main_exports, {
-  default: () => OpenLikeVSC
+  default: () => ActLikeVSCode
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
@@ -114,7 +114,7 @@ var IMAGE_FILE_EXTENSIONS = /* @__PURE__ */ new Set([
 var ARCHIVE_LABEL = "\u5F52\u6863";
 var ARCHIVE_TAG = "#\u5F52\u6863";
 var UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
-var MAX_TAG_CONFIGS = 8;
+var MAX_TAG_CONFIGS = 10;
 var MAX_TAG_LABEL_CHARS = 10;
 var TAG_COLOR_OPTIONS = [
   { id: "gray", label: "\u7070\u8272", value: "var(--text-muted)", swatch: "#8a8a8a" },
@@ -166,7 +166,7 @@ function defaultSettings() {
     navIcons: DEFAULT_SETTINGS.navIcons
   };
 }
-var OpenLikeVSC = class extends import_obsidian.Plugin {
+var ActLikeVSCode = class extends import_obsidian.Plugin {
   /** The current "preview" leaf — can be replaced by the next single-click. */
   previewLeaf = null;
   settings = defaultSettings();
@@ -180,7 +180,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   async onload() {
     await this.loadSettings();
-    this.addSettingTab(new OpenLikeVSCSettingTab(this.app, this));
+    this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
     this.registerDomEvent(document, "click", this.onDocumentClick, true);
     this.registerDomEvent(document, "dblclick", this.onDocumentDblClick, true);
     this.registerEvent(
@@ -230,11 +230,8 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
       new import_obsidian.Notice(`\u6700\u591A\u53EA\u80FD\u914D\u7F6E ${MAX_TAG_CONFIGS} \u4E2A\u6807\u7B7E\u3002`);
       return false;
     }
-    const nextName = this.nextTagName();
-    this.settings = {
-      ...this.settings,
-      tags: [...this.settings.tags, { name: nextName, colorId: "blue" }]
-    };
+    const tags = [...this.settings.tags, { name: "", colorId: "gray" }];
+    this.settings = { ...this.settings, tags };
     await this.persistSettings();
     return true;
   }
@@ -872,7 +869,7 @@ var OpenLikeVSC = class extends import_obsidian.Plugin {
     return leaf.tabHeaderEl ?? null;
   }
 };
-var OpenLikeVSCSettingTab = class extends import_obsidian.PluginSettingTab {
+var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -955,7 +952,23 @@ var OpenLikeVSCSettingTab = class extends import_obsidian.PluginSettingTab {
     });
     addButton.disabled = this.plugin.getTagSettings().length >= MAX_TAG_CONFIGS;
     addButton.addEventListener("click", async () => {
-      if (await this.plugin.addTagSetting()) this.display();
+      if (await this.plugin.addTagSetting()) {
+        this.display();
+        const inputs = this.containerEl.querySelectorAll(
+          ".vsc-tag-title-input:not(.is-readonly)"
+        );
+        const lastInput = inputs[inputs.length - 1];
+        if (lastInput) {
+          lastInput.focus();
+          lastInput.addEventListener("blur", async () => {
+            if (!lastInput.value.trim()) {
+              const tagCount = this.plugin.getTagSettings().length;
+              await this.plugin.removeTagSetting(tagCount - 1);
+              this.display();
+            }
+          }, { once: true });
+        }
+      }
     });
   }
   renderColorChoices(controlEl, selectedColorId, onChoose) {

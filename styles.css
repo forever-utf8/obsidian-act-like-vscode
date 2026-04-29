@@ -129,14 +129,14 @@
   display: block;
   width: 100%;
   height: 26px;
-  padding: 0;
+  padding: 0 4px;
   overflow: hidden;
   border: 0;
   background: transparent;
   box-shadow: none;
   color: var(--text-normal);
   font-size: var(--font-ui-small);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-normal, normal);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -147,19 +147,20 @@
   outline: none;
 }
 
-/* Read-only archive tag: visually locked */
+/* Read-only archive tag: visible box, text aligned with other inputs */
 .vsc-tag-title-input.is-readonly {
   cursor: default;
+  pointer-events: none;
   color: var(--text-muted);
-  font-style: italic;
+  font-weight: var(--font-semibold);
   background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
-  padding-inline: 6px;
+  /* box-shadow used instead of border so it doesn't affect content height */
+  box-shadow: 0 0 0 1px var(--background-modifier-border);
 }
 
 .vsc-tag-title-input.is-readonly:focus {
-  box-shadow: none;
+  box-shadow: 0 0 0 1px var(--background-modifier-border);
 }
 
 .vsc-tag-row-colors {

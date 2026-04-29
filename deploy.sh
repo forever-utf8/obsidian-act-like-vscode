@@ -5,7 +5,7 @@
 set -euo pipefail
 
 VAULT=""
-PLUGIN_ID="open-like-vsc"
+PLUGIN_ID="act-like-vscode"
 DEST="$VAULT/.obsidian/plugins/$PLUGIN_ID"
 
 echo "▶  Building..."

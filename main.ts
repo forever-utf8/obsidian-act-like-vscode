@@ -61,7 +61,7 @@ const IMAGE_FILE_EXTENSIONS = new Set([
 const ARCHIVE_LABEL = "归档";
 const ARCHIVE_TAG = "#归档";
 const UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
-const MAX_TAG_CONFIGS = 8;
+const MAX_TAG_CONFIGS = 10;
 const MAX_TAG_LABEL_CHARS = 10;
 
 /**
@@ -191,7 +191,7 @@ function defaultSettings(): PluginSettings {
   };
 }
 
-export default class OpenLikeVSC extends Plugin {
+export default class ActLikeVSCode extends Plugin {
   /** The current "preview" leaf — can be replaced by the next single-click. */
   private previewLeaf: WorkspaceLeaf | null = null;
   private settings: PluginSettings = defaultSettings();
@@ -208,7 +208,7 @@ export default class OpenLikeVSC extends Plugin {
 
   override async onload(): Promise<void> {
     await this.loadSettings();
-    this.addSettingTab(new OpenLikeVSCSettingTab(this.app, this));
+    this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
 
     // Capture phase fires before Obsidian's own bubble-phase handlers.
     // We register both click and dblclick to avoid any timer-based delays.
@@ -279,11 +279,8 @@ export default class OpenLikeVSC extends Plugin {
       return false;
     }
 
-    const nextName = this.nextTagName();
-    this.settings = {
-      ...this.settings,
-      tags: [...this.settings.tags, { name: nextName, colorId: "blue" }],
-    };
+    const tags = [...this.settings.tags, { name: "", colorId: "gray" as TagColorId }];
+    this.settings = { ...this.settings, tags };
     await this.persistSettings();
     return true;
   }
@@ -1106,8 +1103,8 @@ export default class OpenLikeVSC extends Plugin {
   }
 }
 
-class OpenLikeVSCSettingTab extends PluginSettingTab {
-  constructor(app: App, private readonly plugin: OpenLikeVSC) {
+class ActLikeVSCodeSettingTab extends PluginSettingTab {
+  constructor(app: App, private readonly plugin: ActLikeVSCode) {
     super(app, plugin);
   }
 
@@ -1216,7 +1213,23 @@ class OpenLikeVSCSettingTab extends PluginSettingTab {
 
     addButton.disabled = this.plugin.getTagSettings().length >= MAX_TAG_CONFIGS;
     addButton.addEventListener("click", async () => {
-      if (await this.plugin.addTagSetting()) this.display();
+      if (await this.plugin.addTagSetting()) {
+        this.display();
+        const inputs = this.containerEl.querySelectorAll<HTMLInputElement>(
+          ".vsc-tag-title-input:not(.is-readonly)"
+        );
+        const lastInput = inputs[inputs.length - 1];
+        if (lastInput) {
+          lastInput.focus();
+          lastInput.addEventListener("blur", async () => {
+            if (!lastInput.value.trim()) {
+              const tagCount = this.plugin.getTagSettings().length;
+              await this.plugin.removeTagSetting(tagCount - 1);
+              this.display();
+            }
+          }, { once: true });
+        }
+      }
     });
   }
 

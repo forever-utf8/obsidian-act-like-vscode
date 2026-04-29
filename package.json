@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-open-like-vsc",
+  "name": "obsidian-act-like-vscode",
   "version": "1.0.0",
-  "description": "Open notes like VSCode with preview and pinned tabs",
+  "description": "Act like VSCode in Obsidian: preview tabs, file-state coloring, tag badges, and nav icons.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

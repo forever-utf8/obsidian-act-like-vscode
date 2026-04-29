@@ -1,4 +1,4 @@
-# Open Tabs Like VSCode
+# Act Like VSCode
 
 An Obsidian desktop plugin that brings VS Code tab behavior and visual file-state cues to the file explorer.
 
@@ -22,7 +22,7 @@ File and folder entries in the explorer each get a small icon. Folders show diff
 
 ## Settings
 
-Open *Settings → Open Tabs Like VSCode* to configure:
+Open *Settings → Act Like VSCode* to configure:
 
 - **Tags** — add or remove tags (up to 8). Each tag gets a color used for both the file name and its badge. The first entry ("归档") is the archive tag and cannot be renamed.
 - **Navigation icons** — toggle file and folder icons on or off.
