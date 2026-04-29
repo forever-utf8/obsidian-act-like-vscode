@@ -89,16 +89,16 @@
   align-items: center;
   min-width: 0;
   max-width: 7rem;
-  padding: var(--tag-padding-y, 2px) var(--tag-padding-x, 6px);
+  padding: 0px 3px;
   overflow: hidden;
-  border: var(--tag-border-width, 1px) solid
+  border: 1px solid
     color-mix(in srgb, var(--vsc-nav-tag-color) 38%, transparent);
-  border-radius: var(--tag-radius, 999px);
+  border-radius: 3px;
   background: color-mix(in srgb, var(--vsc-nav-tag-color) 14%, transparent);
   color: var(--vsc-nav-tag-color);
-  font-size: var(--tag-size, var(--font-ui-smaller));
+  font-size: 0.7em;
   font-weight: var(--tag-weight, var(--font-medium));
-  line-height: 1.2;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
