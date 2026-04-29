@@ -1,47 +1,52 @@
 # Act Like VSCode
 
-An Obsidian desktop plugin that brings VS Code tab behavior and visual file-state cues to the file explorer.
+[English](README.en.md) | 中文
 
-## Features
+让 Obsidian 用起来像 VS Code 的桌面插件，为文件浏览器带来预览标签页、文件状态着色和标签徽章。
 
-**VS Code-style tabs**
+## 功能
 
-Single-click a note in the file explorer to open it as a preview tab. Double-click the note or its tab header to pin it. The preview slot holds one tab at a time and replaces it on the next single-click.
+**VS Code 风格的标签页**
 
-**File explorer coloring**
+在文件浏览器中单击笔记，以预览方式打开；双击笔记或标签页标题将其固定。预览槽位同一时刻只保留一个，下次单击时自动替换。
 
-Files and folders are colored by tag state. Unarchived notes appear in green; notes tagged with the archive tag switch to gray (or a color you configure). Folders containing unarchived notes are also highlighted in green. Tab titles mirror the same color shown in the file explorer.
+**文件浏览器着色**
 
-**Tag badges**
+文件和文件夹根据标签状态着色。未归档笔记显示为绿色；被归档标签标记的笔记变为灰色（或你自定义的颜色）。含有未归档笔记的文件夹也会同步高亮为绿色。标签页标题颜色与文件浏览器保持一致。
 
-Configured tags render as small inline badges next to each file name in the explorer, so you can see a file's tags without opening it.
+**标签徽章**
 
-**Navigation icons**
+配置的标签会以小徽章的形式内联显示在文件浏览器的文件名旁，无需打开文件即可看到标签信息。
 
-File and folder entries in the explorer each get a small icon. Folders show different icons when collapsed versus expanded. The icon color follows the entry's text color. Icons can be turned off in settings.
+**导航栏图标**
 
-## Settings
+文件和文件夹条目各有一个小图标；文件夹在折叠与展开时显示不同图标；图标颜色跟随条目文字颜色。可在设置中关闭。
 
-Open *Settings → Act Like VSCode* to configure:
+## 设置
 
-- **Tags** — add or remove tags (up to 8). Each tag gets a color used for both the file name and its badge. The first entry ("归档") is the archive tag and cannot be renamed.
-- **Navigation icons** — toggle file and folder icons on or off.
+打开 *设置 → Act Like VSCode* 进行配置：
 
-## Bundled CSS Snippet
+- **标签** — 增删标签（上限 10 个）。每个标签对应一种颜色，同时作用于文件名和徽章。第一项（"归档"）为固定的归档标签，不可重命名。
+- **导航栏图标** — 开关文件与文件夹图标。
 
-`snippets/style.css` is a standalone Notion-style CSS snippet. Copy it to `.obsidian/snippets/` and enable it in *Settings → Appearance → CSS snippets*.
+## 附带 CSS 片段
 
-It applies: custom fonts (Microsoft YaHei + Maple Mono NF CN), warm-colored H1–H6 hierarchy, compact spacing with a single `--indent-width` token, priority-colored inline tags (`#urgent` / `#important` etc.), gold-border checkboxes, and checked tasks auto-sorted to the bottom of lists (Reading View only).
+`snippets/style.css` 是一个独立的 Notion 风格 CSS 片段，与插件无依赖关系，适用于任何主题。
 
-![Snippet preview](https://github.com/user-attachments/assets/84fab561-2ff7-407d-a593-80fa7e53f810)
+**安装方式**：将文件复制到 `.obsidian/snippets/`，在 *设置 → 外观 → CSS 片段* 中启用。
 
-## Requirements
+包含：微软雅黑 + Maple Mono NF CN 字体组合、H1–H6 暖色层级配色、单一 `--indent-width` 控制列表与引用缩进、优先级彩色内联标签（`#urgent` / `#important` 等）、金边复选框、阅读视图中已完成任务自动置底。
 
-Obsidian desktop `1.8.9` or newer.
+![效果预览](https://github.com/user-attachments/assets/84fab561-2ff7-407d-a593-80fa7e53f810)
 
-## Development
+## 系统要求
+
+Obsidian 桌面端 `1.8.9` 或更新版本。
+
+## 开发
 
 ```bash
-npm install   # install dependencies
-npm run build # type-check + production bundle
+npm install   # 安装依赖
+npm run build # 类型检查 + 生产构建
 ```
+
