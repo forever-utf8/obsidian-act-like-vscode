@@ -3,7 +3,7 @@
   "name": "Act Like VSCode",
   "version": "1.2.0",
   "minAppVersion": "1.8.9",
-  "description": "Act like VSCode in Obsidian: preview tabs on single-click, pin on double-click, file-state coloring, tag badges, and nav icons.",
+  "description": "VS Code-style preview tabs, file-state coloring, tag badges, and nav icons for your vault.",
   "author": "yntangxi",
   "isDesktopOnly": true
 }
