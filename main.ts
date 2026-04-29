@@ -523,6 +523,8 @@ export default class ActLikeVSCode extends Plugin {
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
+      this.moveLeafToEnd(leaf);
+      this.app.workspace.setActiveLeaf(leaf, { focus: true });
       this.setAsPreview(leaf);
     }
   }
@@ -548,6 +550,7 @@ export default class ActLikeVSCode extends Plugin {
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
+      this.moveLeafToEnd(leaf);
     }
   }
 
@@ -915,8 +918,18 @@ export default class ActLikeVSCode extends Plugin {
       const tabEl = this.tabHeaderEl(leaf);
       if (!tabEl) return;
 
-      const file = leaf.view instanceof FileView ? leaf.view.file : null;
-      const state = file ? this.fileStates.get(file.path) : null;
+      // For deferred leaves (background tabs not yet loaded), the view is a
+      // DeferredView, not a FileView. Fall back to the persisted view state to
+      // get the file path so colours are applied immediately on startup.
+      let filePath: string | null = null;
+      if (leaf.view instanceof FileView && leaf.view.file) {
+        filePath = leaf.view.file.path;
+      } else {
+        const stateFile = leaf.getViewState().state?.file;
+        if (typeof stateFile === "string") filePath = stateFile;
+      }
+
+      const state = filePath ? this.fileStates.get(filePath) : null;
 
       if (state) {
         tabEl.setAttribute(TAB_COLOR_ATTR, "");
@@ -1278,6 +1291,27 @@ export default class ActLikeVSCode extends Plugin {
 
   private tabHeaderEl(leaf: WorkspaceLeaf): HTMLElement | null {
     return (leaf as LeafWithTabHeader).tabHeaderEl ?? null;
+  }
+
+  /**
+   * Move a newly-created leaf to the last position in its tab group.
+   * Updates both the internal children array and the tab-header DOM so that
+   * Obsidian's internal state and the visible UI stay in sync.
+   */
+  private moveLeafToEnd(leaf: WorkspaceLeaf): void {
+    const parent = leaf.parent as any;
+    if (parent?.children) {
+      const children = parent.children as WorkspaceLeaf[];
+      const idx = children.indexOf(leaf);
+      if (idx > -1 && idx < children.length - 1) {
+        children.splice(idx, 1);
+        children.push(leaf);
+      }
+    }
+    const tabEl = this.tabHeaderEl(leaf);
+    if (tabEl?.parentElement) {
+      tabEl.parentElement.appendChild(tabEl);
+    }
   }
 }
 

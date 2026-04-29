@@ -423,6 +423,8 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
+      this.moveLeafToEnd(leaf);
+      this.app.workspace.setActiveLeaf(leaf, { focus: true });
       this.setAsPreview(leaf);
     }
   }
@@ -444,6 +446,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     } else {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
+      this.moveLeafToEnd(leaf);
     }
   }
   // ── Tab double-click: convert preview → pinned ───────────────────────────
@@ -732,8 +735,14 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.app.workspace.iterateAllLeaves((leaf) => {
       const tabEl = this.tabHeaderEl(leaf);
       if (!tabEl) return;
-      const file = leaf.view instanceof import_obsidian.FileView ? leaf.view.file : null;
-      const state = file ? this.fileStates.get(file.path) : null;
+      let filePath = null;
+      if (leaf.view instanceof import_obsidian.FileView && leaf.view.file) {
+        filePath = leaf.view.file.path;
+      } else {
+        const stateFile = leaf.getViewState().state?.file;
+        if (typeof stateFile === "string") filePath = stateFile;
+      }
+      const state = filePath ? this.fileStates.get(filePath) : null;
       if (state) {
         tabEl.setAttribute(TAB_COLOR_ATTR, "");
         tabEl.style.setProperty(TAB_COLOR_PROP, state.color);
@@ -1010,6 +1019,26 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   }
   tabHeaderEl(leaf) {
     return leaf.tabHeaderEl ?? null;
+  }
+  /**
+   * Move a newly-created leaf to the last position in its tab group.
+   * Updates both the internal children array and the tab-header DOM so that
+   * Obsidian's internal state and the visible UI stay in sync.
+   */
+  moveLeafToEnd(leaf) {
+    const parent = leaf.parent;
+    if (parent?.children) {
+      const children = parent.children;
+      const idx = children.indexOf(leaf);
+      if (idx > -1 && idx < children.length - 1) {
+        children.splice(idx, 1);
+        children.push(leaf);
+      }
+    }
+    const tabEl = this.tabHeaderEl(leaf);
+    if (tabEl?.parentElement) {
+      tabEl.parentElement.appendChild(tabEl);
+    }
   }
 };
 var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
