@@ -1,0 +1,519 @@
+/* ==========================================================================
+   Notion Style Snippet — unified config, Live & Reading share one rule set
+   ========================================================================== */
+
+/* --- Tokens ------------------------------------------------------------ */
+
+body {
+    --font-interface: "Microsoft YaHei", "微软雅黑", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+    --font-text: "Microsoft YaHei", "微软雅黑", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+    --font-monospace: "Maple Mono NF CN", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+    /* Override Obsidian's internal Live Preview list indent variable */
+    --list-padding-inline-start: var(--indent-width) !important;
+}
+
+:root {
+    --heading-1-size: 1.85em;
+    --heading-2-size: 1.5em;
+    --heading-3-size: 1.25em;
+    --heading-4-size: 1.1em;
+    --heading-5-size: 1em;
+    --heading-6-size: 0.9em;
+
+    --heading-1-space: 1.5em;
+    --heading-2-space: 1.4em;
+    --heading-3-space: 1.2em;
+    --heading-4-space: 0.96em;
+    --heading-5-space: 0.84em;
+    --heading-6-space: 0.72em;
+
+    --content-gap: 0.15em;
+    --divider-gap: 2em;
+    --divider-color: var(--background-modifier-border);
+
+    /* ★ Unified indent width — change THIS ONE value to resize
+       list + blockquote indentation in BOTH modes at once.    */
+    --indent-width: 2ch;
+
+    --list-indent: var(--indent-width);
+    --list-indent-editing: var(--indent-width);
+    --blockquote-indent: var(--indent-width);
+}
+
+.theme-light {
+    --background-primary: #ffffff;
+    --background-primary-alt: #f7f7f5;
+
+    --text-normal: #37352f;
+    --text-muted: #787774;
+    --text-faint: #9b9a97;
+
+    --interactive-accent: #2383e2;
+
+    --heading-1-color: #c0392b;
+    /* warm crimson */
+    --heading-2-color: #d35400;
+    /* burnt orange */
+    --heading-3-color: #b8860b;
+    /* golden amber */
+    --heading-4-color: #6b8e23;
+    /* warm olive */
+    --heading-5-color: #2e8b80;
+    /* warm teal */
+    --heading-6-color: #8b5e83;
+    /* dusty mauve */
+
+    --tag-urgent-color: #eb5757;
+    --tag-urgent-bg: rgba(235, 87, 87, 0.15);
+    --tag-important-color: #f2994a;
+    --tag-important-bg: rgba(242, 153, 74, 0.15);
+    --tag-not-urgent-color: #2d9cdb;
+    --tag-not-urgent-bg: rgba(45, 156, 219, 0.15);
+    --tag-not-important-color: var(--text-faint);
+    --tag-not-important-bg: rgba(189, 189, 189, 0.25);
+}
+
+.theme-dark {
+    --background-primary: #191919;
+    --background-primary-alt: #202020;
+
+    --text-normal: #d4d4d4;
+    --text-muted: #9b9a97;
+    --text-faint: #5a5a5a;
+
+    --interactive-accent: #469bfa;
+
+    --heading-1-color: #f07070;
+    /* soft coral */
+    --heading-2-color: #f0a050;
+    /* warm apricot */
+    --heading-3-color: #f0d264;
+    /* sunny gold */
+    --heading-4-color: #a8d468;
+    /* spring chartreuse */
+    --heading-5-color: #60c8bc;
+    /* warm mint */
+    --heading-6-color: #c8a0c0;
+    /* warm lavender */
+
+    --tag-urgent-color: #ff6b6b;
+    --tag-urgent-bg: rgba(255, 107, 107, 0.2);
+    --tag-important-color: #f2c94c;
+    --tag-important-bg: rgba(242, 201, 76, 0.2);
+    --tag-not-urgent-color: #56ccf2;
+    --tag-not-urgent-bg: rgba(86, 204, 242, 0.2);
+    --tag-not-important-color: #aaaaaa;
+    --tag-not-important-bg: rgba(130, 130, 130, 0.2);
+}
+
+/* --- Priority convergence: font & color baseline ----------------------- */
+.markdown-rendered,
+.markdown-source-view.mod-cm6.is-live-preview .cm-contentContainer {
+    font-family: var(--font-text) !important;
+    color: var(--text-normal) !important;
+    line-height: var(--line-height-normal) !important;
+}
+
+/* --- Headings (unified) ------------------------------------------------ */
+
+/*
+ * Live  selector: .cm-line.HyperMD-header-N  (block-level spacing)
+ * Reading selector: .markdown-rendered hN     (block-level spacing)
+ *
+ * Shared properties are grouped; Reading-only `margin:0` resets browser
+ * defaults that Live's .cm-line simply does not have.
+ */
+
+/* H1 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-1,
+.markdown-rendered h1 {
+    font-size: var(--heading-1-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-1-space) / 2) !important;
+    padding-bottom: calc(var(--heading-1-space) / 2) !important;
+}
+
+/* H2 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-2,
+.markdown-rendered h2 {
+    font-size: var(--heading-2-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-2-space) / 2) !important;
+    padding-bottom: calc(var(--heading-2-space) / 2) !important;
+}
+
+/* H3 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-3,
+.markdown-rendered h3 {
+    font-size: var(--heading-3-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-3-space) / 2) !important;
+    padding-bottom: calc(var(--heading-3-space) / 2) !important;
+}
+
+/* H4 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-4,
+.markdown-rendered h4 {
+    font-size: var(--heading-4-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-4-space) / 2) !important;
+    padding-bottom: calc(var(--heading-4-space) / 2) !important;
+}
+
+/* H5 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-5,
+.markdown-rendered h5 {
+    font-size: var(--heading-5-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-5-space) / 2) !important;
+    padding-bottom: calc(var(--heading-5-space) / 2) !important;
+}
+
+/* H6 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-header-6,
+.markdown-rendered h6 {
+    font-size: var(--heading-6-size) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    padding-top: calc(var(--heading-6-space) / 2) !important;
+    padding-bottom: calc(var(--heading-6-space) / 2) !important;
+}
+
+/* Reading-only: reset browser default margin on heading elements */
+.markdown-rendered h1,
+.markdown-rendered h2,
+.markdown-rendered h3,
+.markdown-rendered h4,
+.markdown-rendered h5,
+.markdown-rendered h6 {
+    margin: 0 !important;
+}
+
+/* Reading-only: reset browser default border-bottom on h1/h2 (some themes add this) */
+.markdown-rendered h1,
+.markdown-rendered h2 {
+    border-bottom: none !important;
+}
+
+/* Heading colors — Live uses .cm-header-N, Reading uses hN */
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-1,
+.markdown-rendered h1 {
+    color: var(--heading-1-color) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-2,
+.markdown-rendered h2 {
+    color: var(--heading-2-color) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-3,
+.markdown-rendered h3 {
+    color: var(--heading-3-color) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-4,
+.markdown-rendered h4 {
+    color: var(--heading-4-color) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-5,
+.markdown-rendered h5 {
+    color: var(--heading-5-color) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .cm-header-6,
+.markdown-rendered h6 {
+    color: var(--heading-6-color) !important;
+}
+
+/* --- Body text spacing (Reading-only resets) --------------------------- */
+/*
+ * Live's CodeMirror lines have no default margin — no reset needed.
+ * Reading renders real <p>/<ul>/<ol>/<li> elements that carry browser defaults.
+ */
+.markdown-rendered p,
+.markdown-rendered ul,
+.markdown-rendered ol,
+.markdown-rendered li {
+    margin: 0 !important;
+}
+
+.markdown-rendered p+p,
+.markdown-rendered p+ul,
+.markdown-rendered p+ol,
+.markdown-rendered ul+p,
+.markdown-rendered ol+p,
+.markdown-rendered ul+ul,
+.markdown-rendered ol+ol {
+    margin-top: var(--content-gap) !important;
+}
+
+/* --- List indentation (unified via --indent-width) --------------------- */
+/* Reading: --list-indent  /  Live: --list-padding-inline-start            */
+/* Both derive from --indent-width in :root — single entry point.          */
+.markdown-rendered ul,
+.markdown-rendered ol {
+    padding-inline-start: var(--list-indent) !important;
+    list-style-position: outside !important;
+}
+
+/* --- Blockquote indentation (unified) ---------------------------------- */
+/* Reading: override Obsidian default padding (~24px) to 2ch               */
+.markdown-rendered blockquote {
+    margin: 0 !important;
+    padding-inline-start: var(--blockquote-indent) !important;
+    border-left: 2px solid var(--interactive-accent) !important;
+}
+
+/* Live: force ALL quote marker spans to exactly --blockquote-indent (2ch).
+   Level-1 marker → cm-formatting-quote
+   Level-2+ markers → cm-blockquote-border                                 */
+.markdown-source-view.mod-cm6.is-live-preview .cm-formatting-quote,
+.markdown-source-view.mod-cm6.is-live-preview .cm-blockquote-border {
+    display: inline-block !important;
+    width: var(--blockquote-indent) !important;
+    text-align: left !important;
+}
+
+/* Live: zero out cm-widgetBuffer images inside quote lines so they don't
+   add extra spacing between the marker spans.                             */
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote>.cm-widgetBuffer {
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Live: override CodeMirror's auto-calculated inline style
+   (text-indent / padding-inline-start) per quote level.
+   Level N needs: padding = N × 2ch, text-indent = −N × 2ch               */
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-1 {
+    text-indent: calc(-1 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(1 * var(--blockquote-indent)) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-2 {
+    text-indent: calc(-2 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(2 * var(--blockquote-indent)) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-3 {
+    text-indent: calc(-3 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(3 * var(--blockquote-indent)) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-4 {
+    text-indent: calc(-4 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(4 * var(--blockquote-indent)) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-5 {
+    text-indent: calc(-5 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(5 * var(--blockquote-indent)) !important;
+}
+
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-quote-6 {
+    text-indent: calc(-6 * var(--blockquote-indent)) !important;
+    padding-inline-start: calc(6 * var(--blockquote-indent)) !important;
+}
+
+/* --- Divider (unified) ------------------------------------------------- */
+/*
+ * Live has TWO elements: .HyperMD-hr (the .cm-line wrapper) containing
+ * .cm-hr (the visible rule). Only the wrapper should carry margin;
+ * the inner element should be visually neutral to avoid doubling.
+ * Reading has just one <hr>.
+ */
+.markdown-rendered hr,
+.markdown-source-view.mod-cm6.is-live-preview .HyperMD-hr {
+    border: 0 !important;
+    border-top: 1px solid var(--divider-color) !important;
+    margin: var(--divider-gap) 0 !important;
+}
+
+/* Reset inner element so margin/border don't stack */
+.markdown-source-view.mod-cm6.is-live-preview .cm-hr {
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* --- Task list alignment (unified where possible) ---------------------- */
+
+/* Live: checkbox right-margin matches Reading */
+.markdown-source-view.mod-cm6.is-live-preview .cm-line.HyperMD-task-line input.task-list-item-checkbox {
+    margin-right: 0.3em !important;
+}
+
+/* Reading: task-list items keep same indent as regular lists (no reset to 0) */
+.markdown-rendered li.task-list-item {
+    text-indent: 0 !important;
+    list-style-type: none !important;
+}
+
+/* --- Checkbox appearance (shared, both modes) -------------------------- */
+.markdown-rendered input[type="checkbox"],
+input[type="checkbox"].task-list-item-checkbox {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    border-radius: 2px !important;
+    border: 1.5px solid #d4a843 !important;
+    width: 1.1em !important;
+    height: 1.1em !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    margin-top: 0 !important;
+    margin-right: 0.3em !important;
+    margin-bottom: 0 !important;
+    transform: none !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+input.task-list-item-checkbox {
+    top: 0 !important;
+    left: 0 !important;
+    margin-top: 0 !important;
+    margin-right: 0.3em !important;
+    margin-bottom: 0 !important;
+    line-height: 1 !important;
+    transform: none !important;
+}
+
+.markdown-rendered input[type="checkbox"]::before,
+input[type="checkbox"].task-list-item-checkbox::before {
+    content: none !important;
+    display: none !important;
+}
+
+.markdown-rendered input[type="checkbox"]:checked,
+input[type="checkbox"].task-list-item-checkbox:checked {
+    background-color: transparent !important;
+    border-color: #d4a843 !important;
+    background-image: none !important;
+}
+
+.markdown-rendered input[type="checkbox"]:hover,
+input[type="checkbox"].task-list-item-checkbox:hover {
+    background-color: transparent !important;
+    border-color: #d4a843 !important;
+    box-shadow: 0 0 4px rgba(212, 168, 67, 0.5);
+}
+
+.markdown-rendered input[type="checkbox"]:checked::after,
+input[type="checkbox"].task-list-item-checkbox:checked::after {
+    content: "\2713" !important;
+    position: absolute !important;
+    display: block !important;
+    color: var(--interactive-accent) !important;
+    font-size: 1.2em;
+    font-weight: bold;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Checked-task text style (shared, both modes) */
+.task-list-item.is-checked,
+.task-list-item.is-checked *,
+.task-list-item[data-task="x"],
+.task-list-item[data-task="x"] *,
+li[data-task="x"],
+li[data-task="x"] *,
+.HyperMD-task-line[data-task="x"],
+.HyperMD-task-line[data-task="x"] * {
+    text-decoration: none !important;
+    color: var(--text-faint) !important;
+}
+
+/* --- Tags (shared, both modes) ----------------------------------------- */
+.tag,
+.cm-hashtag {
+    background-color: var(--background-primary-alt) !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.85em !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    text-decoration: none !important;
+    font-family: var(--font-interface) !important;
+    transition: all 0.2s !important;
+}
+
+.cm-tag-urgent,
+a.tag[href="#urgent"] {
+    background-color: var(--tag-urgent-bg) !important;
+    color: var(--tag-urgent-color) !important;
+}
+
+.cm-tag-important,
+a.tag[href="#important"] {
+    background-color: var(--tag-important-bg) !important;
+    color: var(--tag-important-color) !important;
+}
+
+.cm-tag-not-urgent,
+a.tag[href="#not-urgent"] {
+    background-color: var(--tag-not-urgent-bg) !important;
+    color: var(--tag-not-urgent-color) !important;
+}
+
+.cm-tag-not-important,
+a.tag[href="#not-important"] {
+    background-color: var(--tag-not-important-bg) !important;
+    color: var(--tag-not-important-color) !important;
+}
+
+.cm-s-obsidian span.cm-hashtag-begin {
+    padding-right: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.cm-s-obsidian span.cm-hashtag-end {
+    padding-left: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* --- Move Checked Tasks to Bottom (Reading View Only) --- */
+/* 说明：纯 CSS 方案只能在“阅读视图”（Reading View）中生效。
+   因为“实时预览”（Live Preview）底层是 CodeMirror 6，
+   所有文本行（包括列表项）在 DOM 结构中都是平级的独立 div，
+   一旦对编辑器主体使用 flex order 排序，会导致整个文档的所有文本行顺序错乱。*/
+
+.markdown-rendered ul.contains-task-list {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.markdown-rendered ul.contains-task-list>li {
+    order: 0;
+    /* 未勾选的任务及普通列表项保持原位置 */
+}
+
+.markdown-rendered ul.contains-task-list>li.is-checked,
+.markdown-rendered ul.contains-task-list>li[data-task="x"],
+.markdown-rendered ul.contains-task-list>li[data-task="X"],
+.markdown-rendered ul.contains-task-list>li[data-task="-"] {
+    order: 99 !important;
+    /* 已勾选的任务通过 flex order 排到列表最下方 */
+    opacity: 0.6;
+    /* 可选：让已完成的任务稍微变淡，视觉上更弱化 */
+}

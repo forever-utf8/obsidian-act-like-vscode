@@ -27,6 +27,14 @@ Open *Settings → Act Like VSCode* to configure:
 - **Tags** — add or remove tags (up to 8). Each tag gets a color used for both the file name and its badge. The first entry ("归档") is the archive tag and cannot be renamed.
 - **Navigation icons** — toggle file and folder icons on or off.
 
+## Bundled CSS Snippet
+
+`snippets/style.css` is a standalone Notion-style CSS snippet. Copy it to `.obsidian/snippets/` and enable it in *Settings → Appearance → CSS snippets*.
+
+It applies: custom fonts (Microsoft YaHei + Maple Mono NF CN), warm-colored H1–H6 hierarchy, compact spacing with a single `--indent-width` token, priority-colored inline tags (`#urgent` / `#important` etc.), gold-border checkboxes, and checked tasks auto-sorted to the bottom of lists (Reading View only).
+
+![Snippet preview](https://github.com/user-attachments/assets/84fab561-2ff7-407d-a593-80fa7e53f810)
+
 ## Requirements
 
 Obsidian desktop `1.8.9` or newer.
