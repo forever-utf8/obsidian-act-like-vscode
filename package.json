@@ -1,6 +1,6 @@
 {
   "name": "obsidian-act-like-vscode",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "VS Code-style preview tabs, file-state coloring, tag badges, and nav icons for your vault.",
   "main": "main.js",
   "scripts": {

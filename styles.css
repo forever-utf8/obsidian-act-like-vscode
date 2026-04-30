@@ -87,7 +87,7 @@
 .vsc-nav-tag-badge {
   display: inline-flex;
   align-items: center;
-  min-width: 0;
+  flex-shrink: 0;
   max-width: 7rem;
   padding: 0px 3px;
   overflow: hidden;

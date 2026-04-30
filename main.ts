@@ -68,6 +68,10 @@ interface LeafWithTabHeader extends WorkspaceLeaf {
   tabHeaderEl?: HTMLElement;
 }
 
+interface WorkspaceParentWithLeaves {
+  children: WorkspaceLeaf[];
+}
+
 type TagColorId =
   | "gray"
   | "red"
@@ -184,10 +188,6 @@ function firstAvailableIcon(...iconIds: readonly IconName[]): IconName {
   return iconIds.find((iconId) => availableIconIds?.has(iconId)) ?? iconIds[0];
 }
 
-function cssStringValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
 function isTagColorId(value: unknown): value is TagColorId {
   return TAG_COLOR_OPTIONS.some((option) => option.id === value);
 }
@@ -211,7 +211,6 @@ export default class ActLikeVSCode extends Plugin {
   private fileExplorerSyncFrame: number | null = null;
   private fileExplorerInitialized = false;
   private initialMetadataResolved = false;
-  private inlineTagStyleEl: HTMLStyleElement | null = null;
   private inlineTagObserver: MutationObserver | null = null;
   private inlineTagSyncFrame: number | null = null;
 
@@ -219,7 +218,6 @@ export default class ActLikeVSCode extends Plugin {
 
   override async onload(): Promise<void> {
     await this.loadSettings();
-    this.syncInlineTagStyles();
     this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
 
     // Capture phase fires before Obsidian's own bubble-phase handlers.
@@ -267,8 +265,6 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   override onunload(): void {
-    this.inlineTagStyleEl?.remove();
-    this.inlineTagStyleEl = null;
     this.disconnectInlineTagObserver();
     this.cancelScheduledInlineTagSync();
     this.clearInlineTagDecorations();
@@ -368,7 +364,6 @@ export default class ActLikeVSCode extends Plugin {
   private async persistSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.tagConfigs = this.buildTagConfigs(this.settings);
-    this.syncInlineTagStyles();
     this.scheduleInlineTagSync();
     this.rebuildFileStatusIndex();
     this.scheduleFileExplorerSync();
@@ -1116,29 +1111,6 @@ export default class ActLikeVSCode extends Plugin {
 
   // ── Inline tag badge colours ───────────────────────────────────────────────
 
-  /**
-   * Injects a <style> element that maps each configured tag's href to its
-   * colour via --vsc-inline-tag-color. Re-runs whenever tag configs change.
-   */
-  private syncInlineTagStyles(): void {
-    if (!this.inlineTagStyleEl) {
-      this.inlineTagStyleEl = document.createElement("style");
-      this.inlineTagStyleEl.id = "vsc-inline-tag-colors";
-      document.head.appendChild(this.inlineTagStyleEl);
-    }
-
-    const rules: string[] = [];
-    this.tagConfigs.forEach((config) => {
-      const v = cssStringValue(config.normalizedTag);
-      rules.push(
-        `a.tag[href="${v}"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`,
-        `a.tag[href^="${v}/"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`,
-      );
-    });
-
-    this.inlineTagStyleEl.textContent = rules.join("\n");
-  }
-
   private installInlineTagObserver(): void {
     if (this.inlineTagObserver) return;
 
@@ -1190,6 +1162,29 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private syncInlineTagElements(): void {
+    this.syncRenderedInlineTagElements();
+    this.syncLivePreviewInlineTagElements();
+  }
+
+  private syncRenderedInlineTagElements(): void {
+    document
+      .querySelectorAll<HTMLElement>(
+        [
+          ".markdown-reading-view a.tag",
+          ".markdown-preview-view a.tag",
+          ".markdown-rendered a.tag",
+          ".markdown-source-view.is-live-preview a.tag",
+        ].join(", ")
+      )
+      .forEach((tagEl) => {
+        const config = this.findBestTagConfig(
+          normalizeTagName(tagEl.textContent ?? "")
+        );
+        this.applyInlineTagColor([tagEl], config?.color ?? null);
+      });
+  }
+
+  private syncLivePreviewInlineTagElements(): void {
     const visited = new Set<HTMLElement>();
     document
       .querySelectorAll<HTMLElement>(
@@ -1247,7 +1242,7 @@ export default class ActLikeVSCode extends Plugin {
 
   private clearInlineTagDecorations(): void {
     document
-      .querySelectorAll<HTMLElement>("span.cm-hashtag")
+      .querySelectorAll<HTMLElement>("a.tag, span.cm-hashtag")
       .forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
   }
 
@@ -1299,9 +1294,9 @@ export default class ActLikeVSCode extends Plugin {
    * Obsidian's internal state and the visible UI stay in sync.
    */
   private moveLeafToEnd(leaf: WorkspaceLeaf): void {
-    const parent = leaf.parent as any;
-    if (parent?.children) {
-      const children = parent.children as WorkspaceLeaf[];
+    const parent = leaf.parent;
+    if (this.hasWorkspaceLeafChildren(parent)) {
+      const { children } = parent;
       const idx = children.indexOf(leaf);
       if (idx > -1 && idx < children.length - 1) {
         children.splice(idx, 1);
@@ -1312,6 +1307,16 @@ export default class ActLikeVSCode extends Plugin {
     if (tabEl?.parentElement) {
       tabEl.parentElement.appendChild(tabEl);
     }
+  }
+
+  private hasWorkspaceLeafChildren(
+    parent: unknown
+  ): parent is WorkspaceParentWithLeaves {
+    if (typeof parent !== "object" || parent === null || !("children" in parent)) {
+      return false;
+    }
+    const children = (parent as { readonly children: unknown }).children;
+    return Array.isArray(children) && children.every((child) => child instanceof WorkspaceLeaf);
   }
 }
 

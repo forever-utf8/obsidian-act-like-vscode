@@ -158,9 +158,6 @@ function firstAvailableIcon(...iconIds) {
   availableIconIds ??= new Set((0, import_obsidian.getIconIds)());
   return iconIds.find((iconId) => availableIconIds?.has(iconId)) ?? iconIds[0];
 }
-function cssStringValue(value) {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
 function isTagColorId(value) {
   return TAG_COLOR_OPTIONS.some((option) => option.id === value);
 }
@@ -181,13 +178,11 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   fileExplorerSyncFrame = null;
   fileExplorerInitialized = false;
   initialMetadataResolved = false;
-  inlineTagStyleEl = null;
   inlineTagObserver = null;
   inlineTagSyncFrame = null;
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   async onload() {
     await this.loadSettings();
-    this.syncInlineTagStyles();
     this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
     this.registerDomEvent(document, "click", this.onDocumentClick, true);
     this.registerDomEvent(document, "dblclick", this.onDocumentDblClick, true);
@@ -223,8 +218,6 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.syncTabHandlers();
   }
   onunload() {
-    this.inlineTagStyleEl?.remove();
-    this.inlineTagStyleEl = null;
     this.disconnectInlineTagObserver();
     this.cancelScheduledInlineTagSync();
     this.clearInlineTagDecorations();
@@ -304,7 +297,6 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   async persistSettings() {
     await this.saveData(this.settings);
     this.tagConfigs = this.buildTagConfigs(this.settings);
-    this.syncInlineTagStyles();
     this.scheduleInlineTagSync();
     this.rebuildFileStatusIndex();
     this.scheduleFileExplorerSync();
@@ -877,26 +869,6 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     document.querySelectorAll(`.${ICON_CLASS}`).forEach((iconEl) => iconEl.remove());
   }
   // ── Inline tag badge colours ───────────────────────────────────────────────
-  /**
-   * Injects a <style> element that maps each configured tag's href to its
-   * colour via --vsc-inline-tag-color. Re-runs whenever tag configs change.
-   */
-  syncInlineTagStyles() {
-    if (!this.inlineTagStyleEl) {
-      this.inlineTagStyleEl = document.createElement("style");
-      this.inlineTagStyleEl.id = "vsc-inline-tag-colors";
-      document.head.appendChild(this.inlineTagStyleEl);
-    }
-    const rules = [];
-    this.tagConfigs.forEach((config) => {
-      const v = cssStringValue(config.normalizedTag);
-      rules.push(
-        `a.tag[href="${v}"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`,
-        `a.tag[href^="${v}/"] { ${INLINE_TAG_COLOR_PROP}: ${config.color}; }`
-      );
-    });
-    this.inlineTagStyleEl.textContent = rules.join("\n");
-  }
   installInlineTagObserver() {
     if (this.inlineTagObserver) return;
     this.inlineTagObserver = new MutationObserver(() => {
@@ -941,6 +913,25 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.inlineTagSyncFrame = null;
   }
   syncInlineTagElements() {
+    this.syncRenderedInlineTagElements();
+    this.syncLivePreviewInlineTagElements();
+  }
+  syncRenderedInlineTagElements() {
+    document.querySelectorAll(
+      [
+        ".markdown-reading-view a.tag",
+        ".markdown-preview-view a.tag",
+        ".markdown-rendered a.tag",
+        ".markdown-source-view.is-live-preview a.tag"
+      ].join(", ")
+    ).forEach((tagEl) => {
+      const config = this.findBestTagConfig(
+        normalizeTagName(tagEl.textContent ?? "")
+      );
+      this.applyInlineTagColor([tagEl], config?.color ?? null);
+    });
+  }
+  syncLivePreviewInlineTagElements() {
     const visited = /* @__PURE__ */ new Set();
     document.querySelectorAll(
       ".markdown-source-view.is-live-preview span.cm-hashtag"
@@ -983,7 +974,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     });
   }
   clearInlineTagDecorations() {
-    document.querySelectorAll("span.cm-hashtag").forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
+    document.querySelectorAll("a.tag, span.cm-hashtag").forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
   }
   // ── Utilities ──────────────────────────────────────────────────────────────
   /**
@@ -1027,8 +1018,8 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
    */
   moveLeafToEnd(leaf) {
     const parent = leaf.parent;
-    if (parent?.children) {
-      const children = parent.children;
+    if (this.hasWorkspaceLeafChildren(parent)) {
+      const { children } = parent;
       const idx = children.indexOf(leaf);
       if (idx > -1 && idx < children.length - 1) {
         children.splice(idx, 1);
@@ -1039,6 +1030,13 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     if (tabEl?.parentElement) {
       tabEl.parentElement.appendChild(tabEl);
     }
+  }
+  hasWorkspaceLeafChildren(parent) {
+    if (typeof parent !== "object" || parent === null || !("children" in parent)) {
+      return false;
+    }
+    const children = parent.children;
+    return Array.isArray(children) && children.every((child) => child instanceof import_obsidian.WorkspaceLeaf);
   }
 };
 var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
