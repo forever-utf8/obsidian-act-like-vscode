@@ -184,8 +184,8 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ActLikeVSCodeSettingTab(this.app, this));
-    this.registerDomEvent(document, "click", this.onDocumentClick, true);
-    this.registerDomEvent(document, "dblclick", this.onDocumentDblClick, true);
+    this.registerDomEvent(activeDocument, "click", this.onDocumentClick, true);
+    this.registerDomEvent(activeDocument, "dblclick", this.onDocumentDblClick, true);
     this.registerEvent(
       this.app.workspace.on("layout-change", () => {
         this.syncTabHandlers();
@@ -226,10 +226,10 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.clearFileExplorerDecorations();
     this.fileStates.clear();
     this.unarchivedFolderPaths.clear();
-    document.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
+    activeDocument.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
       el.removeAttribute(PREVIEW_ATTR);
     });
-    document.querySelectorAll(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
+    activeDocument.querySelectorAll(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
       el.removeAttribute(TAB_COLOR_ATTR);
       el.style.removeProperty(TAB_COLOR_PROP);
     });
@@ -285,7 +285,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.settings = { ...this.settings, navIcons: enabled };
     await this.saveData(this.settings);
     if (!enabled) {
-      document.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove());
+      activeDocument.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove());
     } else {
       this.scheduleFileExplorerSync();
     }
@@ -699,7 +699,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     return !changedNodes.every((node) => this.isPluginOwnedNode(node));
   }
   isPluginOwnedNode(node) {
-    if (!(node instanceof HTMLElement)) return false;
+    if (!node.instanceOf(HTMLElement)) return false;
     return node.classList.contains(BADGE_CONTAINER_CLASS) || node.classList.contains(BADGE_CLASS) || node.closest(`.${BADGE_CONTAINER_CLASS}`) !== null || node.classList.contains(ICON_CLASS);
   }
   scheduleFileExplorerSync() {
@@ -717,10 +717,10 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.fileExplorerSyncFrame = null;
   }
   syncFileExplorerDecorations() {
-    document.querySelectorAll(".nav-file-title[data-path]").forEach(
+    activeDocument.querySelectorAll(".nav-file-title[data-path]").forEach(
       (titleEl) => this.decorateFileTitle(titleEl)
     );
-    document.querySelectorAll(".nav-folder-title[data-path]").forEach((titleEl) => this.decorateFolderTitle(titleEl));
+    activeDocument.querySelectorAll(".nav-folder-title[data-path]").forEach((titleEl) => this.decorateFolderTitle(titleEl));
     this.syncTabColors();
   }
   syncTabColors() {
@@ -863,10 +863,10 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     titleEl.style.removeProperty(FOLDER_COLOR_PROP);
   }
   clearFileExplorerDecorations() {
-    document.querySelectorAll(`.nav-file-title[${FILE_STATE_ATTR}]`).forEach((titleEl) => this.clearFileTitleDecoration(titleEl));
-    document.querySelectorAll(`.${BADGE_CONTAINER_CLASS}`).forEach((badgeContainer) => badgeContainer.remove());
-    document.querySelectorAll(`.nav-folder-title[${FOLDER_STATE_ATTR}]`).forEach((titleEl) => this.clearFolderTitleDecoration(titleEl));
-    document.querySelectorAll(`.${ICON_CLASS}`).forEach((iconEl) => iconEl.remove());
+    activeDocument.querySelectorAll(`.nav-file-title[${FILE_STATE_ATTR}]`).forEach((titleEl) => this.clearFileTitleDecoration(titleEl));
+    activeDocument.querySelectorAll(`.${BADGE_CONTAINER_CLASS}`).forEach((badgeContainer) => badgeContainer.remove());
+    activeDocument.querySelectorAll(`.nav-folder-title[${FOLDER_STATE_ATTR}]`).forEach((titleEl) => this.clearFolderTitleDecoration(titleEl));
+    activeDocument.querySelectorAll(`.${ICON_CLASS}`).forEach((iconEl) => iconEl.remove());
   }
   // ── Inline tag badge colours ───────────────────────────────────────────────
   installInlineTagObserver() {
@@ -883,7 +883,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     });
   }
   registerInlineTagInteractionEvents() {
-    this.registerDomEvent(document, "selectionchange", () => {
+    this.registerDomEvent(activeDocument, "selectionchange", () => {
       this.scheduleInlineTagSync();
     });
     this.registerDomEvent(this.app.workspace.containerEl, "input", () => {
@@ -917,7 +917,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.syncLivePreviewInlineTagElements();
   }
   syncRenderedInlineTagElements() {
-    document.querySelectorAll(
+    activeDocument.querySelectorAll(
       [
         ".markdown-reading-view a.tag",
         ".markdown-preview-view a.tag",
@@ -933,7 +933,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   }
   syncLivePreviewInlineTagElements() {
     const visited = /* @__PURE__ */ new Set();
-    document.querySelectorAll(
+    activeDocument.querySelectorAll(
       ".markdown-source-view.is-live-preview span.cm-hashtag"
     ).forEach((tagEl) => {
       if (visited.has(tagEl)) return;
@@ -960,7 +960,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     return segments;
   }
   isInlineTagSegment(node) {
-    return node instanceof HTMLElement && node.classList.contains("cm-hashtag");
+    return node !== null && node.instanceOf(HTMLElement) && node.classList.contains("cm-hashtag");
   }
   applyInlineTagColor(segments, color) {
     segments.forEach((segment) => {
@@ -974,7 +974,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     });
   }
   clearInlineTagDecorations() {
-    document.querySelectorAll("a.tag, span.cm-hashtag").forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
+    activeDocument.querySelectorAll("a.tag, span.cm-hashtag").forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
   }
   // ── Utilities ──────────────────────────────────────────────────────────────
   /**
