@@ -222,8 +222,8 @@ export default class ActLikeVSCode extends Plugin {
 
     // Capture phase fires before Obsidian's own bubble-phase handlers.
     // We register both click and dblclick to avoid any timer-based delays.
-    this.registerDomEvent(document, "click", this.onDocumentClick, true);
-    this.registerDomEvent(document, "dblclick", this.onDocumentDblClick, true);
+    this.registerDomEvent(activeDocument, "click", this.onDocumentClick, true);
+    this.registerDomEvent(activeDocument, "dblclick", this.onDocumentDblClick, true);
 
     // Keep tab handlers and file-explorer decorations in sync with Obsidian redraws.
     this.registerEvent(
@@ -275,12 +275,12 @@ export default class ActLikeVSCode extends Plugin {
     this.unarchivedFolderPaths.clear();
 
     // Strip all preview markers so Obsidian's UI is left clean.
-    document.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
+    activeDocument.querySelectorAll(`[${PREVIEW_ATTR}]`).forEach((el) => {
       el.removeAttribute(PREVIEW_ATTR);
     });
 
     // Strip all tab colour markers.
-    document.querySelectorAll<HTMLElement>(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
+    activeDocument.querySelectorAll<HTMLElement>(`[${TAB_COLOR_ATTR}]`).forEach((el) => {
       el.removeAttribute(TAB_COLOR_ATTR);
       el.style.removeProperty(TAB_COLOR_PROP);
     });
@@ -350,7 +350,7 @@ export default class ActLikeVSCode extends Plugin {
     this.settings = { ...this.settings, navIcons: enabled };
     await this.saveData(this.settings);
     if (!enabled) {
-      document.querySelectorAll<HTMLElement>(`.${ICON_CLASS}`).forEach((el) => el.remove());
+      activeDocument.querySelectorAll<HTMLElement>(`.${ICON_CLASS}`).forEach((el) => el.remove());
     } else {
       this.scheduleFileExplorerSync();
     }
@@ -870,7 +870,7 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private isPluginOwnedNode(node: Node): boolean {
-    if (!(node instanceof HTMLElement)) return false;
+    if (!node.instanceOf(HTMLElement)) return false;
     return (
       node.classList.contains(BADGE_CONTAINER_CLASS) ||
       node.classList.contains(BADGE_CLASS) ||
@@ -897,11 +897,11 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private syncFileExplorerDecorations(): void {
-    document.querySelectorAll<HTMLElement>(".nav-file-title[data-path]").forEach(
+    activeDocument.querySelectorAll<HTMLElement>(".nav-file-title[data-path]").forEach(
       (titleEl) => this.decorateFileTitle(titleEl)
     );
 
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(".nav-folder-title[data-path]")
       .forEach((titleEl) => this.decorateFolderTitle(titleEl));
 
@@ -1092,19 +1092,19 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private clearFileExplorerDecorations(): void {
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(`.nav-file-title[${FILE_STATE_ATTR}]`)
       .forEach((titleEl) => this.clearFileTitleDecoration(titleEl));
 
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(`.${BADGE_CONTAINER_CLASS}`)
       .forEach((badgeContainer) => badgeContainer.remove());
 
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(`.nav-folder-title[${FOLDER_STATE_ATTR}]`)
       .forEach((titleEl) => this.clearFolderTitleDecoration(titleEl));
 
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(`.${ICON_CLASS}`)
       .forEach((iconEl) => iconEl.remove());
   }
@@ -1127,7 +1127,7 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private registerInlineTagInteractionEvents(): void {
-    this.registerDomEvent(document, "selectionchange", () => {
+    this.registerDomEvent(activeDocument, "selectionchange", () => {
       this.scheduleInlineTagSync();
     });
     this.registerDomEvent(this.app.workspace.containerEl, "input", () => {
@@ -1167,7 +1167,7 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private syncRenderedInlineTagElements(): void {
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(
         [
           ".markdown-reading-view a.tag",
@@ -1186,7 +1186,7 @@ export default class ActLikeVSCode extends Plugin {
 
   private syncLivePreviewInlineTagElements(): void {
     const visited = new Set<HTMLElement>();
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>(
         ".markdown-source-view.is-live-preview span.cm-hashtag"
       )
@@ -1221,7 +1221,7 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private isInlineTagSegment(node: Node | null): node is HTMLElement {
-    return node instanceof HTMLElement && node.classList.contains("cm-hashtag");
+    return node !== null && node.instanceOf(HTMLElement) && node.classList.contains("cm-hashtag");
   }
 
   private applyInlineTagColor(
@@ -1241,7 +1241,7 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   private clearInlineTagDecorations(): void {
-    document
+    activeDocument
       .querySelectorAll<HTMLElement>("a.tag, span.cm-hashtag")
       .forEach((tagEl) => tagEl.style.removeProperty(INLINE_TAG_COLOR_PROP));
   }
