@@ -222,6 +222,34 @@
   min-width: 0;
 }
 
+.vsc-tag-input-tooltip {
+  position: fixed;
+  z-index: 9999;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--color-red, #e05252) 12%, var(--background-primary, #fff));
+  color: var(--color-red, #e05252);
+  border: 1px solid color-mix(in srgb, var(--color-red, #e05252) 35%, transparent);
+  font-size: var(--font-ui-small, 12px);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.vsc-tag-input-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 10px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid color-mix(in srgb, var(--color-red, #e05252) 35%, transparent);
+}
+
+.vsc-tag-title-input.is-duplicate {
+  box-shadow: 0 1px 0 var(--color-red, #e05252);
+}
+
 .vsc-tag-title-input {
   display: block;
   width: 100%;

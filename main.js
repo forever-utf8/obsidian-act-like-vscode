@@ -111,7 +111,6 @@ var ARCHIVE_LABEL = "\u5F52\u6863/archived/done";
 var ARCHIVE_TAG = "#\u5F52\u6863";
 var ARCHIVE_TAGS = ["#\u5F52\u6863", "#archived", "#done"];
 var UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
-var MAX_TAG_CONFIGS = 10;
 var MAX_TAG_LABEL_CHARS = 10;
 var TAG_COLOR_OPTIONS = [
   { id: "gray", label: "\u7070\u8272", value: "var(--text-muted)", swatch: "#8a8a8a" },
@@ -246,10 +245,6 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     return index === 0;
   }
   async addTagSetting() {
-    if (this.settings.tags.length >= MAX_TAG_CONFIGS) {
-      new import_obsidian.Notice(`\u6700\u591A\u53EA\u80FD\u914D\u7F6E ${MAX_TAG_CONFIGS} \u4E2A\u6807\u7B7E\u3002`);
-      return false;
-    }
     const tags = [...this.settings.tags, { name: "", colorId: "gray" }];
     this.settings = { ...this.settings, tags };
     await this.persistSettings();
@@ -279,6 +274,15 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     });
     await this.persistSettings();
   }
+  isTagNameDuplicate(name, excludeIndex) {
+    const inputNormalized = normalizeTagName(normalizeTagLabel(name));
+    if (!inputNormalized) return false;
+    return this.settings.tags.some((tag, i) => {
+      if (i === excludeIndex) return false;
+      const label = this.isArchiveTagIndex(i) ? ARCHIVE_LABEL : normalizeTagLabel(tag.name);
+      return normalizeTagName(label) === inputNormalized;
+    });
+  }
   isNavIconsEnabled() {
     return this.settings.navIcons;
   }
@@ -306,13 +310,13 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     const raw = typeof data === "object" && data !== null ? data : {};
     const rawTags = Array.isArray(raw.tags) ? raw.tags : [];
     const archiveTag = this.normalizeArchiveTag(rawTags[0]);
-    const customTags = rawTags.slice(1, MAX_TAG_CONFIGS).filter((tag) => this.isStoredTagConfig(tag)).map((tag) => ({
+    const customTags = rawTags.slice(1).filter((tag) => this.isStoredTagConfig(tag)).map((tag) => ({
       name: normalizeTagLabel(tag.name),
       colorId: tag.colorId
     }));
     const navIcons = typeof raw.navIcons === "boolean" ? raw.navIcons : true;
     return {
-      tags: [archiveTag, ...customTags].slice(0, MAX_TAG_CONFIGS),
+      tags: [archiveTag, ...customTags],
       navIcons
     };
   }
@@ -1097,11 +1101,33 @@ var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
           "aria-label": "\u6807\u7B7E\u540D"
         }
       });
+      let floatingTooltip = null;
+      const showDuplicateTooltip = () => {
+        if (!floatingTooltip) {
+          floatingTooltip = document.body.createDiv({ cls: "vsc-tag-input-tooltip" });
+          floatingTooltip.setText("\u6807\u7B7E\u540D\u91CD\u590D");
+        }
+        const rect = titleInput.getBoundingClientRect();
+        floatingTooltip.style.left = `${rect.left}px`;
+        floatingTooltip.style.top = `${rect.bottom + 6}px`;
+      };
+      const hideDuplicateTooltip = () => {
+        floatingTooltip?.remove();
+        floatingTooltip = null;
+      };
       titleInput.addEventListener("input", () => {
         const truncated = Array.from(titleInput.value).slice(0, MAX_TAG_LABEL_CHARS).join("");
         if (titleInput.value !== truncated) titleInput.value = truncated;
         void this.plugin.updateTagName(index, truncated);
+        const isDuplicate = this.plugin.isTagNameDuplicate(truncated, index);
+        if (isDuplicate) {
+          showDuplicateTooltip();
+        } else {
+          hideDuplicateTooltip();
+        }
+        titleInput.toggleClass("is-duplicate", isDuplicate);
       });
+      titleInput.addEventListener("blur", hideDuplicateTooltip, { capture: true });
     }
     const colorEl = rowEl.createDiv({ cls: "vsc-tag-row-colors" });
     this.renderColorChoices(colorEl, tag.colorId, (colorId) => {
@@ -1122,11 +1148,10 @@ var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
   renderAddTagRow(listEl) {
     const footerEl = listEl.createDiv({ cls: "vsc-tag-list-footer" });
     const addButton = footerEl.createEl("button", {
-      text: "\u65B0\u589E\u6807\u7B7E",
+      text: "\u65B0\u6807\u7B7E...",
       cls: "vsc-tag-add-button mod-cta",
       attr: { type: "button" }
     });
-    addButton.disabled = this.plugin.getTagSettings().length >= MAX_TAG_CONFIGS;
     addButton.addEventListener("click", () => {
       void this.handleAddTagClick();
     });
@@ -1143,15 +1168,17 @@ var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
     );
     const lastInput = inputs[inputs.length - 1];
     if (!lastInput) return;
+    const newTagIndex = this.plugin.getTagSettings().length - 1;
     lastInput.focus();
     lastInput.addEventListener("blur", () => {
-      void this.handleNewTagBlur(lastInput);
+      void this.handleNewTagBlur(lastInput, newTagIndex);
     }, { once: true });
   }
-  async handleNewTagBlur(input) {
-    if (input.value.trim()) return;
-    const tagCount = this.plugin.getTagSettings().length;
-    await this.plugin.removeTagSetting(tagCount - 1);
+  async handleNewTagBlur(input, index) {
+    const value = input.value.trim();
+    const isDuplicate = input.hasClass("is-duplicate");
+    if (value && !isDuplicate) return;
+    await this.plugin.removeTagSetting(index);
     this.display();
   }
   renderColorChoices(controlEl, selectedColorId, onChoose) {

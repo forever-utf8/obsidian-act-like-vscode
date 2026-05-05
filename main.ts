@@ -60,7 +60,6 @@ const ARCHIVE_TAG = "#归档";
 // All tags that trigger archive detection (matched case-insensitively)
 const ARCHIVE_TAGS: readonly string[] = ["#归档", "#archived", "#done"];
 const UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
-const MAX_TAG_CONFIGS = 10;
 const MAX_TAG_LABEL_CHARS = 10;
 
 /**
@@ -303,11 +302,6 @@ export default class ActLikeVSCode extends Plugin {
   }
 
   async addTagSetting(): Promise<boolean> {
-    if (this.settings.tags.length >= MAX_TAG_CONFIGS) {
-      new Notice(`最多只能配置 ${MAX_TAG_CONFIGS} 个标签。`);
-      return false;
-    }
-
     const tags = [...this.settings.tags, { name: "", colorId: "gray" as TagColorId }];
     this.settings = { ...this.settings, tags };
     await this.persistSettings();
@@ -342,6 +336,16 @@ export default class ActLikeVSCode extends Plugin {
       tags: this.settings.tags.filter((_tag, tagIndex) => tagIndex !== index),
     });
     await this.persistSettings();
+  }
+
+  isTagNameDuplicate(name: string, excludeIndex: number): boolean {
+    const inputNormalized = normalizeTagName(normalizeTagLabel(name));
+    if (!inputNormalized) return false;
+    return this.settings.tags.some((tag, i) => {
+      if (i === excludeIndex) return false;
+      const label = this.isArchiveTagIndex(i) ? ARCHIVE_LABEL : normalizeTagLabel(tag.name);
+      return normalizeTagName(label) === inputNormalized;
+    });
   }
 
   isNavIconsEnabled(): boolean {
@@ -380,7 +384,7 @@ export default class ActLikeVSCode extends Plugin {
 
     const archiveTag = this.normalizeArchiveTag(rawTags[0]);
     const customTags = rawTags
-      .slice(1, MAX_TAG_CONFIGS)
+      .slice(1)
       .filter((tag): tag is StoredTagConfig => this.isStoredTagConfig(tag))
       .map((tag) => ({
         name: normalizeTagLabel(tag.name),
@@ -390,7 +394,7 @@ export default class ActLikeVSCode extends Plugin {
     const navIcons = typeof raw.navIcons === "boolean" ? raw.navIcons : true;
 
     return {
-      tags: [archiveTag, ...customTags].slice(0, MAX_TAG_CONFIGS),
+      tags: [archiveTag, ...customTags],
       navIcons,
     };
   }
@@ -1403,13 +1407,40 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
           "aria-label": "标签名",
         },
       });
+
+      let floatingTooltip: HTMLElement | null = null;
+
+      const showDuplicateTooltip = () => {
+        if (!floatingTooltip) {
+          floatingTooltip = document.body.createDiv({ cls: "vsc-tag-input-tooltip" });
+          floatingTooltip.setText("标签名重复");
+        }
+        const rect = titleInput.getBoundingClientRect();
+        floatingTooltip.style.left = `${rect.left}px`;
+        floatingTooltip.style.top = `${rect.bottom + 6}px`;
+      };
+
+      const hideDuplicateTooltip = () => {
+        floatingTooltip?.remove();
+        floatingTooltip = null;
+      };
+
       titleInput.addEventListener("input", () => {
         const truncated = Array.from(titleInput.value)
           .slice(0, MAX_TAG_LABEL_CHARS)
           .join("");
         if (titleInput.value !== truncated) titleInput.value = truncated;
         void this.plugin.updateTagName(index, truncated);
+        const isDuplicate = this.plugin.isTagNameDuplicate(truncated, index);
+        if (isDuplicate) {
+          showDuplicateTooltip();
+        } else {
+          hideDuplicateTooltip();
+        }
+        titleInput.toggleClass("is-duplicate", isDuplicate);
       });
+
+      titleInput.addEventListener("blur", hideDuplicateTooltip, { capture: true });
     }
 
     const colorEl = rowEl.createDiv({ cls: "vsc-tag-row-colors" });
@@ -1433,12 +1464,11 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
   private renderAddTagRow(listEl: HTMLElement): void {
     const footerEl = listEl.createDiv({ cls: "vsc-tag-list-footer" });
     const addButton = footerEl.createEl("button", {
-      text: "新增标签",
+      text: "新标签...",
       cls: "vsc-tag-add-button mod-cta",
       attr: { type: "button" },
     });
 
-    addButton.disabled = this.plugin.getTagSettings().length >= MAX_TAG_CONFIGS;
     addButton.addEventListener("click", () => {
       void this.handleAddTagClick();
     });
@@ -1459,17 +1489,19 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
     const lastInput = inputs[inputs.length - 1];
     if (!lastInput) return;
 
+    const newTagIndex = this.plugin.getTagSettings().length - 1;
     lastInput.focus();
     lastInput.addEventListener("blur", () => {
-      void this.handleNewTagBlur(lastInput);
+      void this.handleNewTagBlur(lastInput, newTagIndex);
     }, { once: true });
   }
 
-  private async handleNewTagBlur(input: HTMLInputElement): Promise<void> {
-    if (input.value.trim()) return;
+  private async handleNewTagBlur(input: HTMLInputElement, index: number): Promise<void> {
+    const value = input.value.trim();
+    const isDuplicate = input.hasClass("is-duplicate");
+    if (value && !isDuplicate) return;
 
-    const tagCount = this.plugin.getTagSettings().length;
-    await this.plugin.removeTagSetting(tagCount - 1);
+    await this.plugin.removeTagSetting(index);
     this.display();
   }
 
