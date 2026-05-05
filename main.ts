@@ -1450,13 +1450,32 @@ class ActLikeVSCodeSettingTab extends PluginSettingTab {
 
     const actionsEl = rowEl.createDiv({ cls: "vsc-tag-row-actions" });
     if (!isArchive) {
+      let confirmTimer: ReturnType<typeof setTimeout> | null = null;
+
       const deleteButton = actionsEl.createEl("button", {
         text: "×",
         cls: "vsc-tag-delete-button",
         attr: { type: "button", "aria-label": "删除标签" },
       });
+
       deleteButton.addEventListener("click", () => {
-        void this.handleDeleteTagClick(index);
+        if (deleteButton.hasClass("is-confirming")) {
+          if (confirmTimer !== null) {
+            clearTimeout(confirmTimer);
+            confirmTimer = null;
+          }
+          void this.handleDeleteTagClick(index);
+        } else {
+          deleteButton.addClass("is-confirming");
+          deleteButton.setText("✓");
+          deleteButton.setAttribute("aria-label", "确认删除");
+          confirmTimer = setTimeout(() => {
+            deleteButton.removeClass("is-confirming");
+            deleteButton.setText("×");
+            deleteButton.setAttribute("aria-label", "删除标签");
+            confirmTimer = null;
+          }, 3000);
+        }
       });
     }
   }

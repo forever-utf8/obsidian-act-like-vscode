@@ -1135,13 +1135,30 @@ var ActLikeVSCodeSettingTab = class extends import_obsidian.PluginSettingTab {
     });
     const actionsEl = rowEl.createDiv({ cls: "vsc-tag-row-actions" });
     if (!isArchive) {
+      let confirmTimer = null;
       const deleteButton = actionsEl.createEl("button", {
         text: "\xD7",
         cls: "vsc-tag-delete-button",
         attr: { type: "button", "aria-label": "\u5220\u9664\u6807\u7B7E" }
       });
       deleteButton.addEventListener("click", () => {
-        void this.handleDeleteTagClick(index);
+        if (deleteButton.hasClass("is-confirming")) {
+          if (confirmTimer !== null) {
+            clearTimeout(confirmTimer);
+            confirmTimer = null;
+          }
+          void this.handleDeleteTagClick(index);
+        } else {
+          deleteButton.addClass("is-confirming");
+          deleteButton.setText("\u2713");
+          deleteButton.setAttribute("aria-label", "\u786E\u8BA4\u5220\u9664");
+          confirmTimer = setTimeout(() => {
+            deleteButton.removeClass("is-confirming");
+            deleteButton.setText("\xD7");
+            deleteButton.setAttribute("aria-label", "\u5220\u9664\u6807\u7B7E");
+            confirmTimer = null;
+          }, 3e3);
+        }
       });
     }
   }
