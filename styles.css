@@ -210,7 +210,7 @@
 
 .vsc-tag-list-item {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) 2rem;
+  grid-template-columns: 10rem minmax(0, 1fr) 2rem;
   align-items: center;
   min-height: 32px;
   padding: 4px 8px;

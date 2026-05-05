@@ -107,8 +107,9 @@ var IMAGE_FILE_EXTENSIONS = /* @__PURE__ */ new Set([
   "heic",
   "heif"
 ]);
-var ARCHIVE_LABEL = "\u5F52\u6863";
+var ARCHIVE_LABEL = "\u5F52\u6863/archived/done";
 var ARCHIVE_TAG = "#\u5F52\u6863";
+var ARCHIVE_TAGS = ["#\u5F52\u6863", "#archived", "#done"];
 var UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 var MAX_TAG_CONFIGS = 10;
 var MAX_TAG_LABEL_CHARS = 10;
@@ -552,11 +553,10 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     let archiveMatch = null;
     let lastNonArchiveMatch = null;
     let hasArchiveTag = false;
-    const archiveTag = this.archiveTagConfig().normalizedTag;
     this.orderedTagsFromCache(cache).forEach((rawTag) => {
       const normalizedTag = normalizeTagName(rawTag);
       if (!normalizedTag) return;
-      if (this.tagMatchesConfig(normalizedTag, archiveTag)) {
+      if (this.archiveTagMatchesFile(normalizedTag)) {
         hasArchiveTag = true;
       }
       const config = this.findBestTagConfig(normalizedTag);
@@ -609,10 +609,17 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
   compareTagPosition(a, b) {
     return a.position.start.offset - b.position.start.offset;
   }
+  archiveTagMatchesFile(actualTag) {
+    const lower = actualTag.toLowerCase();
+    return ARCHIVE_TAGS.some(
+      (alias) => lower === alias || lower.startsWith(`${alias}/`)
+    );
+  }
   findBestTagConfig(normalizedTag) {
     let bestConfig = null;
     this.tagConfigs.forEach((config) => {
-      if (!this.tagMatchesConfig(normalizedTag, config.normalizedTag)) return;
+      const matches = config.isArchive ? this.archiveTagMatchesFile(normalizedTag) : this.tagMatchesConfig(normalizedTag, config.normalizedTag);
+      if (!matches) return;
       if (!bestConfig || config.normalizedTag.length > bestConfig.normalizedTag.length) {
         bestConfig = config;
       }

@@ -55,8 +55,10 @@ const IMAGE_FILE_EXTENSIONS = new Set([
   "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "tiff", "tif", "avif", "heic", "heif",
 ]);
 
-const ARCHIVE_LABEL = "归档";
+const ARCHIVE_LABEL = "归档/archived/done";
 const ARCHIVE_TAG = "#归档";
+// All tags that trigger archive detection (matched case-insensitively)
+const ARCHIVE_TAGS: readonly string[] = ["#归档", "#archived", "#done"];
 const UNARCHIVED_COLOR = "var(--color-green, #08b94e)";
 const MAX_TAG_CONFIGS = 10;
 const MAX_TAG_LABEL_CHARS = 10;
@@ -678,13 +680,12 @@ export default class ActLikeVSCode extends Plugin {
     let archiveMatch: FileTagMatch | null = null;
     let lastNonArchiveMatch: FileTagMatch | null = null;
     let hasArchiveTag = false;
-    const archiveTag = this.archiveTagConfig().normalizedTag;
 
     this.orderedTagsFromCache(cache).forEach((rawTag) => {
       const normalizedTag = normalizeTagName(rawTag);
       if (!normalizedTag) return;
 
-      if (this.tagMatchesConfig(normalizedTag, archiveTag)) {
+      if (this.archiveTagMatchesFile(normalizedTag)) {
         hasArchiveTag = true;
       }
 
@@ -754,11 +755,21 @@ export default class ActLikeVSCode extends Plugin {
     return a.position.start.offset - b.position.start.offset;
   }
 
+  private archiveTagMatchesFile(actualTag: string): boolean {
+    const lower = actualTag.toLowerCase();
+    return ARCHIVE_TAGS.some(
+      (alias) => lower === alias || lower.startsWith(`${alias}/`)
+    );
+  }
+
   private findBestTagConfig(normalizedTag: string): NormalizedTagConfig | null {
     let bestConfig: NormalizedTagConfig | null = null;
 
     this.tagConfigs.forEach((config) => {
-      if (!this.tagMatchesConfig(normalizedTag, config.normalizedTag)) return;
+      const matches = config.isArchive
+        ? this.archiveTagMatchesFile(normalizedTag)
+        : this.tagMatchesConfig(normalizedTag, config.normalizedTag);
+      if (!matches) return;
       if (
         !bestConfig ||
         config.normalizedTag.length > bestConfig.normalizedTag.length
