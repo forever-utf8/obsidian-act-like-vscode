@@ -1,7 +1,6 @@
 import {
   App,
   FileView,
-  Notice,
   Plugin,
   PluginSettingTab,
   Setting,
