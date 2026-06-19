@@ -1262,6 +1262,7 @@ export default class ActLikeVSCode extends Plugin {
     let existing: WorkspaceLeaf | null = null;
     let previewAlive = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
+      if (!this.isMainWorkspaceLeaf(leaf)) return;
       if (this.filePathFromLeaf(leaf) === file.path) {
         existing = leaf;
       }
@@ -1277,7 +1278,10 @@ export default class ActLikeVSCode extends Plugin {
 
     // Restored background tabs can remain deferred until activated. In that
     // state Obsidian keeps the file path in the persisted view state.
-    const stateFile = leaf.getViewState().state?.file;
+    const viewState = leaf.getViewState();
+    if (viewState.type !== "markdown") return null;
+
+    const stateFile = viewState.state?.file;
     return typeof stateFile === "string" ? stateFile : null;
   }
 
@@ -1285,9 +1289,13 @@ export default class ActLikeVSCode extends Plugin {
     if (!this.previewLeaf) return;
     let alive = false;
     this.app.workspace.iterateAllLeaves((l) => {
-      if (l === this.previewLeaf) alive = true;
+      if (l === this.previewLeaf && this.isMainWorkspaceLeaf(l)) alive = true;
     });
     if (!alive) this.previewLeaf = null;
+  }
+
+  private isMainWorkspaceLeaf(leaf: WorkspaceLeaf): boolean {
+    return leaf.hoverPopover === null && this.tabHeaderEl(leaf) !== null;
   }
 
   private fileFromEvent(e: MouseEvent): TFile | null {

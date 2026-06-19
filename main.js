@@ -990,6 +990,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     let existing = null;
     let previewAlive = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
+      if (!this.isMainWorkspaceLeaf(leaf)) return;
       if (this.filePathFromLeaf(leaf) === file.path) {
         existing = leaf;
       }
@@ -1001,16 +1002,21 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     if (leaf.view instanceof import_obsidian.FileView && leaf.view.file) {
       return leaf.view.file.path;
     }
-    const stateFile = leaf.getViewState().state?.file;
+    const viewState = leaf.getViewState();
+    if (viewState.type !== "markdown") return null;
+    const stateFile = viewState.state?.file;
     return typeof stateFile === "string" ? stateFile : null;
   }
   cleanupPreviewLeaf() {
     if (!this.previewLeaf) return;
     let alive = false;
     this.app.workspace.iterateAllLeaves((l) => {
-      if (l === this.previewLeaf) alive = true;
+      if (l === this.previewLeaf && this.isMainWorkspaceLeaf(l)) alive = true;
     });
     if (!alive) this.previewLeaf = null;
+  }
+  isMainWorkspaceLeaf(leaf) {
+    return leaf.hoverPopover === null && this.tabHeaderEl(leaf) !== null;
   }
   fileFromEvent(e) {
     const titleEl = e.target.closest(".nav-file-title");
