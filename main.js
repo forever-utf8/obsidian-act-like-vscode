@@ -738,13 +738,7 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     this.app.workspace.iterateAllLeaves((leaf) => {
       const tabEl = this.tabHeaderEl(leaf);
       if (!tabEl) return;
-      let filePath = null;
-      if (leaf.view instanceof import_obsidian.FileView && leaf.view.file) {
-        filePath = leaf.view.file.path;
-      } else {
-        const stateFile = leaf.getViewState().state?.file;
-        if (typeof stateFile === "string") filePath = stateFile;
-      }
+      const filePath = this.filePathFromLeaf(leaf);
       const state = filePath ? this.fileStates.get(filePath) : null;
       if (state) {
         tabEl.setAttribute(TAB_COLOR_ATTR, "");
@@ -996,12 +990,19 @@ var ActLikeVSCode = class extends import_obsidian.Plugin {
     let existing = null;
     let previewAlive = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.view instanceof import_obsidian.FileView && leaf.view.file === file) {
+      if (this.filePathFromLeaf(leaf) === file.path) {
         existing = leaf;
       }
       if (leaf === this.previewLeaf) previewAlive = true;
     });
     return { existing, previewAlive };
+  }
+  filePathFromLeaf(leaf) {
+    if (leaf.view instanceof import_obsidian.FileView && leaf.view.file) {
+      return leaf.view.file.path;
+    }
+    const stateFile = leaf.getViewState().state?.file;
+    return typeof stateFile === "string" ? stateFile : null;
   }
   cleanupPreviewLeaf() {
     if (!this.previewLeaf) return;

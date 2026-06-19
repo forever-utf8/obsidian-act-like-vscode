@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-VAULT="path/to/your/vault"
+VAULT="${1:-$HOME/dev/ohmynotes}"
 PLUGIN_ID="act-like-vscode"
 DEST="$VAULT/.obsidian/plugins/$PLUGIN_ID"
 

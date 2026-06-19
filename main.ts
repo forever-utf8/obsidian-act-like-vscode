@@ -927,17 +927,7 @@ export default class ActLikeVSCode extends Plugin {
       const tabEl = this.tabHeaderEl(leaf);
       if (!tabEl) return;
 
-      // For deferred leaves (background tabs not yet loaded), the view is a
-      // DeferredView, not a FileView. Fall back to the persisted view state to
-      // get the file path so colours are applied immediately on startup.
-      let filePath: string | null = null;
-      if (leaf.view instanceof FileView && leaf.view.file) {
-        filePath = leaf.view.file.path;
-      } else {
-        const stateFile = leaf.getViewState().state?.file;
-        if (typeof stateFile === "string") filePath = stateFile;
-      }
-
+      const filePath = this.filePathFromLeaf(leaf);
       const state = filePath ? this.fileStates.get(filePath) : null;
 
       if (state) {
@@ -1272,12 +1262,23 @@ export default class ActLikeVSCode extends Plugin {
     let existing: WorkspaceLeaf | null = null;
     let previewAlive = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.view instanceof FileView && leaf.view.file === file) {
+      if (this.filePathFromLeaf(leaf) === file.path) {
         existing = leaf;
       }
       if (leaf === this.previewLeaf) previewAlive = true;
     });
     return { existing, previewAlive };
+  }
+
+  private filePathFromLeaf(leaf: WorkspaceLeaf): string | null {
+    if (leaf.view instanceof FileView && leaf.view.file) {
+      return leaf.view.file.path;
+    }
+
+    // Restored background tabs can remain deferred until activated. In that
+    // state Obsidian keeps the file path in the persisted view state.
+    const stateFile = leaf.getViewState().state?.file;
+    return typeof stateFile === "string" ? stateFile : null;
   }
 
   private cleanupPreviewLeaf(): void {
